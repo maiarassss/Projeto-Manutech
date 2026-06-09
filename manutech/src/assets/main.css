@@ -1,0 +1,88 @@
+/* Reset básico */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Corpo da página */
+body {
+  font-family: "Segoe UI", Arial, sans-serif;
+  background-color: #f4f6f9;
+  color: #1f2937;
+  line-height: 1.6;
+}
+
+/* Container principal */
+#app {
+  min-height: 100vh;
+}
+
+/* Barra de navegação */
+nav {
+  background-color: #1e3a5f;
+  padding: 18px 40px;
+  display: flex;
+  gap: 25px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Links */
+nav a {
+  color: white;
+  text-decoration: none;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: 0.3s;
+}
+
+nav a:hover {
+  color: #cbd5e1;
+}
+
+/* Link da página atual */
+nav a.router-link-active {
+  border-bottom: 2px solid white;
+  padding-bottom: 3px;
+}
+
+/* Conteúdo */
+main {
+  max-width: 1000px;
+  margin: 50px auto;
+  padding: 30px;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+/* Títulos */
+h1 {
+  color: #1e3a5f;
+  margin-bottom: 20px;
+  font-size: 2.2rem;
+  text-align: center;
+  line-height: 3;
+  text-size-adjust: 50px;
+}
+
+/* Parágrafos */
+p {
+  color: #4b5563;
+  font-size: 1.05rem;
+}
+
+/* Botões */
+button {
+  background-color: #1e3a5f;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+button:hover {
+  background-color: #294c79;
+}
