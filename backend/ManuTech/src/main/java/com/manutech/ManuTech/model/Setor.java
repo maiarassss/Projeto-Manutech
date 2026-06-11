@@ -21,6 +21,6 @@ public class Setor {
 
     private String nomeSetor;
 
-    @ManyToMany
+    @OneToMany
     private List<Tecnico> tecnicos = new ArrayList<>();
 }
