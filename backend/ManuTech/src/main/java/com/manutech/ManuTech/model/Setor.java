@@ -12,18 +12,15 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
-@Table(name = "TBMAQUINA")
-public class Maquina {
+@Table(name = "TBSETOR")
+public class Setor {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long idMaquina;
+    private Long idSetor;
 
-    private String modelo;
-    private Boolean ativa;
+    private String nomeSetor;
 
     @OneToMany
-    @JoinColumn(name = "idOrdem")
-    private List<OrdemServico> ordem = new ArrayList<>();
-    //lista de ordens que a máquina tem registrada
+    private List<Tecnico> tecnicos = new ArrayList<>();
 }
