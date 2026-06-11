@@ -22,7 +22,7 @@ public class Maquina {
     private String modelo;
     private Boolean ativa;
 
-    @OneToOne
+    @OneToMany
     @JoinColumn(name = "idOrdem")
     private List<OrdemServico> ordem = new ArrayList<>();
     //lista de ordens que a máquina tem registrada
