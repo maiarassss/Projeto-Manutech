@@ -25,4 +25,10 @@ public class Setor { //entidade principal
     //relação bidirecional para que o setor possa acessar seus tecnicos
     @ManyToMany(mappedBy = "setoresAtendidos")
     private List<Tecnico> listaTecnicos = new ArrayList<>();
+
+
+    //um setor contém muitas máquinas
+    @OneToMany(mappedBy = "setor")
+    private List<Maquina> listaMaquinas = new ArrayList<>();
+    //o setor pode acessar os dados de cada máquina dependente para gerar os relatórios de desempenho do setpr
 }
