@@ -29,8 +29,7 @@ public class Maquina { //dependente do setor
     @JoinColumn(name = "FK_idSetor")
     private Setor setor;
 
-//    @OneToMany
-//    @JoinColumn(name = "idOrdem")
-//    private List<OrdemServico> ordem = new ArrayList<>();
-//    //lista de ordens que a máquina tem registrada
+    @OneToMany(mappedBy = "maquina")
+    private List<OrdemServico> listaOrdens = new ArrayList<>();
+    //cada máquina pode registrar suas demandas de manutenção para fins de análise de desempenho
 }
