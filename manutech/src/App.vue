@@ -9,7 +9,7 @@ const sidebarOpen = ref(false);
   <header class="navbar">
     <button class="menu-button" @click="sidebarOpen = !sidebarOpen">☰</button>
 
-    <h1>Bem-vindo à MANUTECH</h1>
+    <h1>MANUTECH</h1>
 
     <input type="text" placeholder="Pesquisar..." class="search-bar" />
   </header>
@@ -46,9 +46,11 @@ body {
   background: #f4f6f9;
 }
 
+/*NAVBAR*/
+
 .navbar {
   height: 70px;
-  background: #1565c0;
+  background: #144e94;
 
   display: flex;
   align-items: center;
@@ -61,8 +63,9 @@ body {
 
 .navbar h1 {
   flex: 1;
-  margin-left: 20px;
+  margin-left: 11%;
   color: white;
+  height: 130%;
 }
 
 .menu-button {
@@ -74,18 +77,15 @@ body {
 }
 
 .search-bar {
-  width: 250px;
+  width: 280px;
   height: 40px;
-
   border: none;
   border-radius: 10px;
-
   padding-left: 15px;
-
   outline: none;
 }
 
-/* CORPO */
+/* CORPO DA PÁGINA */
 
 .container {
   display: flex;
