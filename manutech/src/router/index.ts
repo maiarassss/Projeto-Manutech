@@ -24,6 +24,10 @@ const router = createRouter({
       path: "/maquinas",
       component: MaquinasView,
     },
+    {
+      path: "/:pathMatch(.*)*",
+      redirect: "/",
+    },
   ],
 });
 
