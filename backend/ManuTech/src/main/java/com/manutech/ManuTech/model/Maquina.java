@@ -13,17 +13,23 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @Table(name = "TBMAQUINA")
-public class Maquina {
+public class Maquina { //dependente do setor
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long idMaquina;
 
+    //RN24: código obrigatório para cadastrar máquina, também para caso de máquinas do mesmo modelo
+    private String codigoIdentificador;
+
     private String modelo;
     private Boolean ativa;
 
-    @OneToOne
-    @JoinColumn(name = "idOrdem")
-    private List<OrdemServico> ordem = new ArrayList<>();
-    //lista de ordens que a máquina tem registrada
+    @ManyToOne //muitas máquinas podem ser usadas em um único setor
+    @JoinColumn(name = "FK_idSetor")
+    private Setor setor;
+
+    @OneToMany(mappedBy = "maquina")
+    private List<OrdemServico> listaOrdens = new ArrayList<>();
+    //cada máquina pode registrar suas demandas de manutenção para fins de análise de desempenho
 }

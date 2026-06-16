@@ -11,8 +11,8 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
-@Table(name = "TBORDEMSERVICO")
-public class OrdemServico {
+@Table(name = "TB_ORDEMSERVICO")
+public class OrdemServico { //dependente da máquina
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,9 +20,16 @@ public class OrdemServico {
 
     private String titulo;
     private String descricao;
-    private Prioridade prioridade;
 
-    @OneToOne
-    @JoinColumn(name = "idMaquina")
+    @Enumerated(EnumType.STRING)
+    private Prioridade prioridade;
+    //enuns
+    @Enumerated(EnumType.STRING)
+    private StatusOrdem status;
+
+
+    @ManyToOne //muitas demandas diferentes podem ser feitas para a mesma máquina
+    @JoinColumn(name = "FK_idMaquina")
     private Maquina maquina;
+    //RN28: toda ordem deve estar obrigatoriamente vinculada em alguma máquina
 }
