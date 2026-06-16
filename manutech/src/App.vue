@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from "vue";
+import { RouterLink, RouterView } from "vue-router";
 
 const sidebarOpen = ref(false);
 </script>
@@ -39,7 +40,9 @@ const sidebarOpen = ref(false);
 }
 
 body {
-  font-family: Segoe UI;
+  font-family:
+    sans-serif,
+    Segoe UI;
   background: #f4f6f9;
 }
 
@@ -125,6 +128,11 @@ body {
 
 .sidebar a:hover {
   background: #334155;
+}
+
+.sidebar a.router-link-active {
+  background: #1565c0;
+  font-weight: bold;
 }
 
 .content {

@@ -3,6 +3,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import InicioView from "../views/Inicio.vue";
 import OrdensView from "../views/Ordens.vue";
 import TecnicosView from "../views/Tecnicos.vue";
+import MaquinasView from "../views/Maquinas.vue";
 
 const router = createRouter({
   history: createWebHistory(),
@@ -18,6 +19,15 @@ const router = createRouter({
     {
       path: "/tecnicos",
       component: TecnicosView,
+    },
+
+    {
+      path: "/maquinas",
+      component: MaquinasView,
+    },
+    {
+      path: "/:pathMatch(.*)*",
+      redirect: "/",
     },
   ],
 });
