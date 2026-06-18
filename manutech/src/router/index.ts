@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 
 import InicioView from "../views/Inicio.vue";
-import OrdensView from "../views/ordens/Ordens.vue";
+import OrdensView from "../views/ordens/OrdemManutencao.vue/index.js";
 import TecnicosView from "../views/tecnicos/Tecnicos.vue";
 import MaquinasView from "../views/maquinas/Maquinas.vue";
 
