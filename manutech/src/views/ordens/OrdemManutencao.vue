@@ -1,4 +1,9 @@
 <template>
+  <h1>oi</h1>
+</template>
+
+
+<!-- <template>
   <div>
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h2>Ordens de Manutenção</h2>
@@ -56,3 +61,4 @@ async function buscarOrdensEMaquinas() {
 
 onMounted(buscarOrdensEMaquinas);
 </script>
+ -->

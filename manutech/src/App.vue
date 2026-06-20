@@ -63,7 +63,7 @@ body {
 
 .navbar h1 {
   flex: 1;
-  margin-left: 11%;
+  margin-left: 13%;
   color: white;
   height: 130%;
 }

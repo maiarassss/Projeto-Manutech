@@ -1,3 +1,6 @@
+<!-- /*
+
+
 <template>
   <div class="card h-100">
     <div class="card-body">
@@ -39,3 +42,4 @@ defineProps<{
   ordem: OrdemManutencaoDetalhes;
 }>();
 </script>
+ -->
