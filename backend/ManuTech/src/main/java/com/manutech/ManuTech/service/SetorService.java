@@ -33,11 +33,17 @@ public class SetorService {
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Setor não encotrado!"));
     }
 
+    public SetorResponseDTO buscarPorId (Long idSetor){
+
+        Setor setor = buscarEntidade(idSetor);
+        //reaproveita a verificação que a busca por entidade faz e retorna em formato dto
+        return toResponseDTO(setor);
+    }
+
     //listagem de todos os setores;.map(traz todos os registros, transforma em dto e retorna em forma de lista)
     public List<SetorResponseDTO> listarSetores(){
         return repository.findAll().stream().map(this::toResponseDTO).toList();
     }
-
 
     public List<SetorResponseDTO> buscarSetorPorNome(String nomeSetor){
         return repository.findByNomeSetorContainingIgnoreCase(nomeSetor)
