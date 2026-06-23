@@ -16,6 +16,7 @@ const sidebarOpen = ref(false);
 
   <div class="container">
     <!-- Sidebar -->
+
     <aside class="sidebar" :class="{ active: sidebarOpen }">
       <RouterLink to="/"> Início </RouterLink>
 
@@ -93,21 +94,24 @@ body {
 
 .sidebar {
   position: fixed;
-
   top: 70px;
-  left: -250px;
+  left: 0;
 
   width: 250px;
-  height: 100vh;
+  height: calc(100vh - 70px);
 
   background: #1e293b;
 
   display: flex;
   flex-direction: column;
 
-  padding-top: 30px;
+  padding: 20px;
 
-  transition: 0.3s;
+  transition: 0.3s ease;
+}
+
+.sidebar:not(.active) {
+  width: 70px;
 }
 
 .sidebar.active {
@@ -136,14 +140,12 @@ body {
 }
 
 .content {
-  width: 100%;
-
   padding: 40px;
-
   transition: 0.3s;
+  margin-left: 250px;
 }
 
 .content.shifted {
-  margin-left: 250px;
+  margin-left: 70px;
 }
 </style>

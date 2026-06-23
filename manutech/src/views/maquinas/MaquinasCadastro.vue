@@ -9,7 +9,7 @@ const modelo = ref("");
 const responsavel = ref("");
 const status = ref("");
 
-// controle de modo
+//função pra diferenciar se é cadastro ou edição
 const isEdit = ref(false);
 
 onMounted(() => {
@@ -26,13 +26,14 @@ onMounted(() => {
   }
 });
 
+//salva mas ainda n tem backend
 function salvar() {
   if (isEdit.value) {
     console.log("Atualizando máquina...");
     console.log({
       modelo: modelo.value,
       responsavel: responsavel.value,
-      status: status.value
+      status: status.value,
     });
   } else {
     console.log("Criando máquina...");
@@ -52,7 +53,6 @@ function salvar() {
     </h1>
 
     <form class="formulario">
-
       <input v-model="modelo" type="text" placeholder="Modelo" />
 
       <select v-model="responsavel">
@@ -72,7 +72,6 @@ function salvar() {
       <button type="button" @click="salvar">
         {{ isEdit ? "Atualizar" : "Salvar" }}
       </button>
-
     </form>
   </div>
 </template>
