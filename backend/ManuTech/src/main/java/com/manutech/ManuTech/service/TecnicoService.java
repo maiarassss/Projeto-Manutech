@@ -49,6 +49,20 @@ public class TecnicoService {
         return toResponseDTO(tecnico);
     }
 
+    //lista técnicos por nome
+    public List<TecnicoResponseDTO> buscarPorNome(String nome){
+        return repository.findByNomeContainingIgnoreCase(nome)
+                .stream().map(this::toResponseDTO).toList();
+                // cada item listado é convertido em dto s
+    }
+
+    //lista tdos os técnicos relacionados ao setor informado
+    public List<TecnicoResponseDTO> listarTecnicosPorSetor(Long idSetor){
+        return repository.findBySetoresAtendidosIdSetor(idSetor)
+                .stream().map(this::toResponseDTO).toList();
+    }
+
+
     public List<TecnicoResponseDTO> listarTecnicos() {
         return repository.findAll().stream().map(this::toResponseDTO).toList();
     }
