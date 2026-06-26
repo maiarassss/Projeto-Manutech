@@ -12,11 +12,11 @@ import java.util.List;
 public class MaquinaService {
 
     private final MaquinaRepository repository;
-    private final OrdemServicoService ordemService;
+//    private final OrdemServicoService ordemService;
 
-    public MaquinaService(MaquinaRepository repository, OrdemServicoService ordemService){
+    public MaquinaService(MaquinaRepository repository){// OrdemServicoService ordemService){
         this.repository = repository;
-        this.ordemService = ordemService;
+//        this.ordemService = ordemService;
         //apesar da máquina em si ser independente da ordem, o histórico dela não é
     }
 
@@ -56,7 +56,27 @@ public class MaquinaService {
         //retorna uma lista com os itens já convertidos em dto
     }
 
+    //lista todas as máquinas cadastradas no sistema
+    public List<MaquinaResponseDTO> listarMaquinas(){
+        return repository.findAll()
+                .stream()
+                .map(this::toResponseDTO)
+                .toList();
+    }
 
+    public List<MaquinaResponseDTO> listarMaquinasPorAtividade(Boolean ativa){
+        return repository.findByAtiva(ativa)
+                .stream()
+                .map(this::toResponseDTO)
+                .toList();
 
+    }
 
+    //lista as máquinas atráves do setor indicado
+    public List<MaquinaResponseDTO> listarMaquinasPorSetor(Long idSetor){
+        return repository.findBySetorIdSetor(idSetor)
+                .stream()
+                .map(this::toResponseDTO)
+                .toList();
+    }
 }
