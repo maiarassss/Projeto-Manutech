@@ -1,64 +1,128 @@
 <template>
-  <h1>oi</h1>
+  <h1>Ordens de Manutenção</h1>
 </template>
 
+<!-- <script setup>
+import { Pencil, Trash2 } from "lucide-vue-next";
+import { useOrdensManutencaoStore } from "@/stores/ordensManutencaoStore"
+import { onMounted } from "vue"
+import { ordensManutencao } from "../../stores/ordensManutencao.js";
+const store = useOrdensManutencaoStore()
 
-<!-- <template>
-  <div>
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h2>Ordens de Manutenção</h2>
+onMounted(() => {
+  //aguardando backend
+  })
 
-      <RouterLink to="/ordens/nova" class="btn btn-dark">
-        + Nova Ordem
-      </RouterLink>
-    </div>
+function excluirOrdem(id) {
+  ordensManutencao.value = ordensManutencao.value.filter(
+    ordem => ordem.id !== id
+  );
+}/*  */
+</script>
 
-    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-      <div class="col" v-for="ordem in ordens" :key="ordem.id">
-        <OrdemManutencaoCard :ordem="ordem" />
+<template>
+  <div class="container">
+    <h1>Ordens de Manutenção</h1>
+
+    <div
+      class="ordem-item"
+      v-for="ordem in ordensManutencao"
+      :key="ordem.id"
+    >
+      <span>{{ ordem.titulo }}</span>
+
+      <div class="acoes">
+        <router-link :to="`/ordens-manutencao/editar/${ordem.id}`">
+          <button class="editar" type="button">
+            <Pencil :size="18" />
+          </button>
+        </router-link>
+
+        <button
+          class="excluir"
+          type="button"
+          @click="excluirOrdem(ordem.id)"
+        >
+          <Trash2 :size="18" />
+        </button>
       </div>
     </div>
+
+    <router-link to="/ordens-manutencao/cadastro">
+      <button class="btn-cadastro">
+        + Cadastrar Ordem de Manutenção
+      </button>
+    </router-link>
   </div>
 </template>
 
-<script setup lang="ts">
-import { ref, onMounted } from "vue";
-
-import OrdemManutencaoCard from "@/components/Ordem/OrdemCard.vue";
-
-import { getOrdensManutencao, getMaquinas } from "../services/api";
-
-import type {
-  OrdemManutencao,
-  OrdemManutencaoDetalhes,
-} from "../interfaces/OrdemManutencao";
-
-import type Maquina from "../interfaces/Maquina";
-
-const ordens = ref<OrdemManutencaoDetalhes[]>([]);
-
-async function buscarOrdensEMaquinas() {
-  const resOrdens = await getOrdensManutencao();
-  const resMaquinas = await getMaquinas();
-
-  const listaOrdens: OrdemManutencao[] = resOrdens;
-  const listaMaquinas: Maquina[] = resMaquinas;
-
-  for (let i = 0; i < listaOrdens.length; i++) {
-    const ordem = listaOrdens[i];
-
-    const maquina = listaMaquinas.find((m) => m.id == ordem.maquinaId);
-
-    const ordemDetalhes = {
-      ...ordem,
-      nomeMaquina: maquina?.nome,
-      setor: maquina?.setor,
-    } as OrdemManutencaoDetalhes;
-
-    ordens.value.push(ordemDetalhes);
-  }
+<style scoped>
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 0;
 }
 
-onMounted(buscarOrdensEMaquinas);
-</script>
- -->
+h1 {
+  color: #153b7a;
+  font-size: 3rem;
+  margin-bottom: 10px;
+}
+
+.ordem-item {
+  width: 60%;
+  background: white;
+  border: 1px solid #dcdcdc;
+  border-radius: 8px;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 18px 24px;
+  margin-bottom: 20px;
+
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+}
+
+.acoes {
+  display: flex;
+  gap: 30px;
+}
+
+.editar {
+  color: blue;
+}
+
+.excluir {
+  color: red;
+}
+
+button {
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.btn-cadastro {
+  margin-top: 50px;
+  width: 300px;
+  height: 70px;
+
+  background: #173f82;
+  color: white;
+
+  border: none;
+  border-radius: 10px;
+
+  font-size: 1.4rem;
+  font-weight: bold;
+
+  cursor: pointer;
+}
+
+.btn-cadastro:hover {
+  background-color: #17305b;
+}
+</style> -->

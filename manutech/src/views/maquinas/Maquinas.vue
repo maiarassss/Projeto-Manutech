@@ -1,17 +1,19 @@
 <script setup>
-import { ref } from "vue";
-import { Pencil, Trash2 } from "lucide-vue-next";
+import { Pencil, Trash2 } from "lucide-vue-next"
+import { useMaquinasStore } from "@/stores/maquinaStore"
+import { onMounted, computed } from "vue"
 
-const maquinas = ref([
-  { id: 1, nome: "Máquina A" },
-  { id: 2, nome: "Máquina B" },
-  { id: 3, nome: "Máquina C" },
-]);
+const store = useMaquinasStore()
+
+onMounted(() => {
+  store.buscarMaquinas() // ou o nome da sua função de load
+})
+
+const maquinas = computed(() => store.maquinas)
 
 function excluirMaquina(id) {
-  maquinas.value = maquinas.value.filter(maquina => maquina.id !== id);
+  store.excluirMaquina(id)
 }
-
 </script>
 <template>
   <div class="container">
