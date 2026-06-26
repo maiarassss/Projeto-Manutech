@@ -9,7 +9,11 @@
   background-color: #111184;
   color: white;
   height: 80px;
-
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  z-index: 1000;
   display: flex;
   align-items: center;
 
