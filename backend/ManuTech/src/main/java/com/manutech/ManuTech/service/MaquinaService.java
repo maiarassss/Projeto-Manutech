@@ -59,6 +59,16 @@ public class MaquinaService {
         //retorna uma lista com os itens já convertidos em dto
     }
 
+    //**manter id setor para testar a selecao no front
+    public List<MaquinaResponseDTO> buscarPorModeloESetor(String modelo, Long idSetor){
+
+        return repository.findByModeloESetorIdSetor(modelo, idSetor)
+                .stream()
+                .map(this::toResponseDTO)
+                .toList();
+    }
+
+
     //lista todas as máquinas cadastradas no sistema
     public List<MaquinaResponseDTO> listarMaquinas(){
         return repository.findAll()
@@ -82,8 +92,8 @@ public class MaquinaService {
                 .toList();
     }
 
-    public List<OrdemServicoResponseDTO> listarOrdens(Long idMaquina){
-        return ordemService.listarOrdensPorMaquina(idMaquina);
+    public List<OrdemServicoResponseDTO> listarOrdens(String codigoIdentificador){
+        return ordemService.listarOrdensPorMaquina(codigoIdentificador);
         //não precisa do .map porque dentro do método já tem
     }
 
