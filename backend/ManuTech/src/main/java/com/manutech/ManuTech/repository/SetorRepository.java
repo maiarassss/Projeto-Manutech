@@ -10,4 +10,6 @@ public interface SetorRepository extends JpaRepository<Setor, Long> {
     //consulta de setor por nome
     List<Setor> findByNomeSetorContainingIgnoreCase(String nomeSetor);
 
+    boolean existsByNomeSetorIgnoreCase(String nomeSetor);
+    //metodo para verificar a existência de registro no banco com nome informado (exclusivo para cadastro)
 }

@@ -4,6 +4,7 @@ package com.manutech.ManuTech.service;
 import com.manutech.ManuTech.dto.SetorRequestDTO;
 import com.manutech.ManuTech.dto.SetorResponseDTO;
 import com.manutech.ManuTech.exception.RecursoNaoEncontradoException;
+import com.manutech.ManuTech.exception.RegraDeNegocioException;
 import com.manutech.ManuTech.model.Setor;
 import com.manutech.ManuTech.repository.SetorRepository;
 import org.springframework.stereotype.Service;
@@ -55,6 +56,11 @@ public class SetorService {
     public SetorResponseDTO salvarSetor(SetorRequestDTO dto){
 
         Setor setor = new Setor();
+
+        //verifica se já tem algum setor no banco com o nome informado no request
+        if(repository.existsByNomeSetorIgnoreCase(dto.nomeSetor())){ //apenas chamar um metodo boleano considera automat ele como true
+            throw new RegraDeNegocioException("O nome informado já está cadastrado.");
+        }
 
         setor.setNomeSetor(dto.nomeSetor());
         Setor setorSalvo = repository.save(setor);
