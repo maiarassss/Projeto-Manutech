@@ -1,7 +1,7 @@
 package com.manutech.ManuTech.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotEmpty;
 
 import java.util.List;
 
@@ -12,7 +12,7 @@ public record TecnicoRequestDTO(
 
         String telefone,
 
-        //uma lista para registrar mais de um setor por técnico
-        @NotNull(message = "*Informe o(s) setor(s) do técnico")
+        //uma lista para registrar mais de um setor por técnico, que não pode estar vazia
+        @NotEmpty(message = "*Informe o(s) setor(s) do técnico")
         List<Long> idsSetores
 ) {}
