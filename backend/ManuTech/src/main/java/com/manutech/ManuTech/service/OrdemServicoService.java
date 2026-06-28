@@ -3,11 +3,14 @@ package com.manutech.ManuTech.service;
 import com.manutech.ManuTech.dto.OrdemServicoRequestDTO;
 import com.manutech.ManuTech.dto.OrdemServicoResponseDTO;
 import com.manutech.ManuTech.exception.RecursoNaoEncontradoException;
+import com.manutech.ManuTech.model.Maquina;
 import com.manutech.ManuTech.model.OrdemServico;
 import com.manutech.ManuTech.model.Prioridade;
 import com.manutech.ManuTech.model.StatusOrdem;
+import com.manutech.ManuTech.repository.MaquinaRepository;
 import com.manutech.ManuTech.repository.OrdemServicoRepository;
 import org.springframework.stereotype.Service;
+
 
 import java.util.List;
 
@@ -17,9 +20,11 @@ public class OrdemServicoService {
     private final OrdemServicoRepository repository;
     private final MaquinaService maquinaService;
 
+
     public OrdemServicoService(OrdemServicoRepository repository, MaquinaService maquinaService) {
         this.repository = repository;
         this.maquinaService = maquinaService;
+        //a ordem precisa de uma máquina para ser criada
     }
 
     public OrdemServicoResponseDTO toResponseDTO(OrdemServico ordem) {
@@ -86,9 +91,9 @@ public class OrdemServicoService {
                 .toList();
     }
 
-    //listagem de ordens de determinada máquina através de seu código identificador
+    //listagem de ordens de determinada máquina através de seu codigo identificador
     public List<OrdemServicoResponseDTO> listarOrdensPorMaquina(String codigoIdentificador){
-        return repository.findByMaquinaIdMaquina(codigoIdentificador)
+        return repository.findByMaquinaCodigoIdentificador(codigoIdentificador)
                 .stream()
                 .map(this::toResponseDTO)
                 .toList();
@@ -103,6 +108,19 @@ public class OrdemServicoService {
                 .toList();
     }
 
+    //atualiza a atividade da maquina conforme o status
+    private void atualizarAtividade(Maquina maquina, StatusOrdem statusOrdem) {
+
+        if (statusOrdem == StatusOrdem.ANDAMENTO) {
+            maquina.setAtiva(false);
+            //se a manutenção estiver em andamento a maquina é desativada
+
+        } else { //senão, obviamente esta aberta, concluida ou cancelada = maquina funcionando
+            maquina.setAtiva(true);
+        }
+        maquinaService.salvarEntidade(maquina);
+    }
+
 
     public OrdemServicoResponseDTO salvarOrdem(OrdemServicoRequestDTO dto){
 
@@ -112,9 +130,14 @@ public class OrdemServicoService {
         ordem.setDescricao(dto.descricao());
         ordem.setPrioridade(dto.prioridade());
         ordem.setStatus(dto.status());
-        ordem.getMaquina().setIdMaquina(dto.idMaquina());
 
-        return toResponseDTO(ordem);
+        Maquina maquina = maquinaService.buscarEntidade(dto.idMaquina());
+        ordem.setMaquina(maquina); //a entidade ordem recebe um objeto maquina
+
+        atualizarAtividade(maquina, dto.status());
+
+        OrdemServico ordemAtualizada = repository.save(ordem);
+        return toResponseDTO(ordemAtualizada);
     }
 
 
@@ -126,9 +149,14 @@ public class OrdemServicoService {
         ordem.setDescricao(dto.descricao());
         ordem.setPrioridade(dto.prioridade());
         ordem.setStatus(dto.status());
-        ordem.getMaquina().setIdMaquina(dto.idMaquina());
 
-        return toResponseDTO(ordem);
+        Maquina maquina = maquinaService.buscarEntidade(dto.idMaquina());
+        ordem.setMaquina(maquina);
+
+        atualizarAtividade(maquina, dto.status());
+
+        OrdemServico ordemAtualizada = repository.save(ordem);
+        return toResponseDTO(ordemAtualizada);
     }
 
 
