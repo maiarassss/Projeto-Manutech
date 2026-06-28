@@ -10,16 +10,19 @@
 <style scoped>
 .sidebar {
   width: 230px;
-  background: #111184;
   min-height: calc(100vh - 80px);
+
+  position: fixed;
+  top: 70px;
+  left: 0px;
+
+  background: #111184;
 
   display: flex;
   flex-direction: column;
-
-  padding: 20px;
+  padding: 80px;
   gap: 20px;
 }
-
 a {
   color: white;
   text-decoration: none;
