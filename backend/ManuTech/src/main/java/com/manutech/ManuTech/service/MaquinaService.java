@@ -6,6 +6,7 @@ import com.manutech.ManuTech.dto.OrdemServicoResponseDTO;
 import com.manutech.ManuTech.exception.RecursoNaoEncontradoException;
 import com.manutech.ManuTech.exception.RegraDeNegocioException;
 import com.manutech.ManuTech.model.Maquina;
+import com.manutech.ManuTech.model.Setor;
 import com.manutech.ManuTech.repository.MaquinaRepository;
 import org.springframework.stereotype.Service;
 
@@ -16,11 +17,15 @@ public class MaquinaService {
 
     private final MaquinaRepository repository;
     private final OrdemServicoService ordemService;
+    private final SetorService setorService;
 
-    public MaquinaService(MaquinaRepository repository, OrdemServicoService ordemService){
+    public MaquinaService(MaquinaRepository repository, OrdemServicoService ordemService, SetorService setorService){
         this.repository = repository;
         this.ordemService = ordemService;
         //apesar da máquina em si ser independente da ordem, o histórico dela não é
+
+        this.setorService = setorService;
+        //setor necessário para registrar e atualizar máquinas
     }
 
     public Maquina buscarEntidade(Long idMaquina){
@@ -62,7 +67,7 @@ public class MaquinaService {
     //**manter id setor para testar a selecao no front
     public List<MaquinaResponseDTO> buscarPorModeloESetor(String modelo, Long idSetor){
 
-        return repository.findByModeloESetorIdSetor(modelo, idSetor)
+        return repository.findByModeloAndSetorIdSetor(modelo, idSetor)
                 .stream()
                 .map(this::toResponseDTO)
                 .toList();
@@ -102,14 +107,21 @@ public class MaquinaService {
 
         Maquina maquina = new Maquina();
 
+        //**rn cod identificador unico
+        //verifica se o código identificador inserido no request já existe no banco de dados
+        if (repository.findByCodigoIdentificador(dto.codigoIdentificador()).isPresent()) {
+            throw new RegraDeNegocioException("Código identificador já registrado.");
+        }
         maquina.setCodigoIdentificador(dto.codigoIdentificador());
+
         maquina.setModelo(dto.modelo());
         maquina.setAtiva(dto.ativa());
 
-        //puxa o id do setor associado a maquina
-        maquina.getSetor().setIdSetor(dto.idSetor());
+        //primeiro busca no banco o id do setor informado no request
+        Setor setor = setorService.buscarEntidade(dto.idSetor());
+        maquina.setSetor(setor); //se existir traz esse mesmo setor(entidade) para dentro da entidade maquina
 
-        return toResponseDTO(maquina);
+        return toResponseDTO(maquina); //como vai converter em dto, o que fica salvo no response ainda é apenas o idSetor
     }
 
 //    //quem faz a atualização da máquina? se for o gestor ele tem acesso ao id mas se for o tecnico não
@@ -121,7 +133,10 @@ public class MaquinaService {
 
         maquina.setModelo(dto.modelo());
         maquina.setAtiva(dto.ativa());
-        maquina.getSetor().setIdSetor(dto.idSetor());
+
+        //mesma situacao do salvar
+        Setor setor = setorService.buscarEntidade(dto.idSetor());
+        maquina.setSetor(setor);
 
         return toResponseDTO(maquina);
     }
