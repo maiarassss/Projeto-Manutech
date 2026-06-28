@@ -35,6 +35,11 @@ public class OrdemServicoController {
         return service.listarOrdensPorSetor(nomeSetor);
     }
 
+    @GetMapping("/tecnico/{idTecnico}")
+    public List<OrdemServicoResponseDTO> listarPorTecnico(@PathVariable Long idTecnico) {
+        return service.listarOrdensPorTecnico(idTecnico); // Lembre de criar esse método repassando para o repository no Service
+    }
+
     @GetMapping("/{idOrdem}")
     public OrdemServicoResponseDTO buscarPorId(@PathVariable Long idOrdem) {
         return service.buscarPorId(idOrdem);

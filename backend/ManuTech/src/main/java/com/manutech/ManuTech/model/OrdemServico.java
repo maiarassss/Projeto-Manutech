@@ -30,4 +30,9 @@ public class OrdemServico {
     @JoinColumn(name = "FK_idMaquina")
     private Maquina maquina;
     //para uma ordem ser registrada precisa informar a máquina com defeito
+
+    @ManyToOne
+    @JoinColumn(name = "id_tecnico")
+    private Tecnico tecnico;
+    //relacionamento unidirecional: apenas a ordem conhece o tecnico que a atendeu
 }

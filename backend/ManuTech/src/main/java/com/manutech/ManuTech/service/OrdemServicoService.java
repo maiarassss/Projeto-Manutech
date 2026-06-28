@@ -7,9 +7,9 @@ import com.manutech.ManuTech.model.Maquina;
 import com.manutech.ManuTech.model.OrdemServico;
 import com.manutech.ManuTech.model.Prioridade;
 import com.manutech.ManuTech.model.StatusOrdem;
-import com.manutech.ManuTech.repository.MaquinaRepository;
 import com.manutech.ManuTech.repository.OrdemServicoRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PathVariable;
 
 
 import java.util.List;
@@ -19,12 +19,13 @@ public class OrdemServicoService {
 
     private final OrdemServicoRepository repository;
     private final MaquinaService maquinaService;
+    private final TecnicoService tecnicoService;
 
-
-    public OrdemServicoService(OrdemServicoRepository repository, MaquinaService maquinaService) {
+    public OrdemServicoService(OrdemServicoRepository repository, MaquinaService maquinaService, TecnicoService tecnicoService) {
         this.repository = repository;
         this.maquinaService = maquinaService;
         //a ordem precisa de uma máquina para ser criada
+        this.tecnicoService = tecnicoService;
     }
 
     public OrdemServicoResponseDTO toResponseDTO(OrdemServico ordem) {
@@ -44,7 +45,11 @@ public class OrdemServicoService {
 
                 //dados do setor que a máquina pertence
                 ordem.getMaquina().getSetor().getIdSetor(),
-                ordem.getMaquina().getSetor().getNomeSetor()
+                ordem.getMaquina().getSetor().getNomeSetor(),
+
+                //verifica se há tecnico atrelado a ordem, se houver traz os dados dele
+                ordem.getTecnico() != null ? ordem.getTecnico().getIdTecnico() : null,
+                ordem.getTecnico() != null ? ordem.getTecnico().getNome() : "Não atribuído"
         );
     }
 
@@ -108,6 +113,13 @@ public class OrdemServicoService {
                 .toList();
     }
 
+    public List<OrdemServicoResponseDTO> listarOrdensPorTecnico(Long idTecnico) {
+        return repository.findByTecnicoIdTecnico(idTecnico)
+                .stream()
+                .map(this::toResponseDTO)
+                .toList();
+    }
+
     //atualiza a atividade da maquina conforme o status
     private void atualizarAtividade(Maquina maquina, StatusOrdem statusOrdem) {
 
@@ -136,6 +148,11 @@ public class OrdemServicoService {
 
         atualizarAtividade(maquina, dto.status());
 
+        if (dto.idTecnico() != null) {
+            ordem.setTecnico(tecnicoService.buscarEntidade(dto.idTecnico()));
+            //se a ordem for criada já com um tecnico responsavel, verifica se o id informado existe no banco e traz ele caso existir
+        }
+
         OrdemServico ordemAtualizada = repository.save(ordem);
         return toResponseDTO(ordemAtualizada);
     }
@@ -154,6 +171,14 @@ public class OrdemServicoService {
         ordem.setMaquina(maquina);
 
         atualizarAtividade(maquina, dto.status());
+
+        if (dto.idTecnico() != null) {
+            ordem.setTecnico(tecnicoService.buscarEntidade(dto.idTecnico()));
+            //caso um id seja informado no request vai verificar o banco e atribuir
+        } else {
+            ordem.setTecnico(null);
+            //agora caso nenhum id seja informado mantém sem tecnico atribuido ou mantem o tecnico que ja estava vinculado caso haja(testar)
+        }
 
         OrdemServico ordemAtualizada = repository.save(ordem);
         return toResponseDTO(ordemAtualizada);

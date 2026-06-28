@@ -21,5 +21,8 @@ public record OrdemServicoRequestDTO(
         StatusOrdem status,
 
         @NotNull(message = "*Informe a máquina")
-        Long idMaquina
+        Long idMaquina,
+
+        Long idTecnico
+        //nao é obrigatorio porque uma ordem não precisa ser vinculada a um técnico assim qu é aberta
 ) {}

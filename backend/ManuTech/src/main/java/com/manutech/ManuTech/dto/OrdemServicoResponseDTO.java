@@ -19,5 +19,9 @@ public record OrdemServicoResponseDTO(
         String modelo,
         Boolean ativa,
         Long idSetor,
-        String nomeSetor
+        String nomeSetor,
+
+        //informações sobre o tecnico que atendeu
+        Long idTecnico,
+        String nomeTecnico
 ) {}

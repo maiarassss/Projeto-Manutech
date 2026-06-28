@@ -21,4 +21,7 @@ public interface OrdemServicoRepository extends JpaRepository<OrdemServico, Long
 
     //consulta de ordens pelo nome do setor da máquina
     List<OrdemServico> findByMaquinaSetorNomeSetorContainingIgnoreCase(String nomeSetor);
+
+    //consulta todas as ordens que determinado tecnico atendeu
+    List<OrdemServico> findByTecnicoIdTecnico(Long idTecnico);
 }
