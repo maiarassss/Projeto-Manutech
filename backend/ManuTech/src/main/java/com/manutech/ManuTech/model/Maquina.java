@@ -19,7 +19,8 @@ public class Maquina {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long idMaquina;
 
-    //RN24: código obrigatório para cadastrar máquina
+    //RN24: código obrigatório para cadastrar máquina que seja unico
+    @Column(unique = true, nullable = false, length = 100)
     private String codigoIdentificador;
 
     private String modelo;

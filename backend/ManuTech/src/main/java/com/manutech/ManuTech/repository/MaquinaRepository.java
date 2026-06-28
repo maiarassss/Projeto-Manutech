@@ -17,8 +17,8 @@ public interface MaquinaRepository extends JpaRepository<Maquina, Long> {
 
     List<Maquina> findBySetorIdSetor(Long idSetor);
 
-    //para listar máquinas de determinado modelo e setor
-    List<Maquina> findByModeloESetorIdSetor(String modelo, Long idSetor);
+    //para listar máquinas de determinado modelo e setor; ajuste na sintaxe
+    List<Maquina> findByModeloAndSetorIdSetor(String modelo, Long idSetor);
 
     //não acho que faça sentido um findByOrdemId porque se eu sei qual é o id da ordem eu sei também qual é a ordem e qual máquina ela atende
 
