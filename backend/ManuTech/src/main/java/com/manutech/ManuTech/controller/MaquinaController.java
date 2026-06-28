@@ -40,7 +40,7 @@ public class MaquinaController {
     }
 
     @GetMapping("/{id}")
-    public MaquinaResponseDTO buscarPorId(Long idMaquina){
+    public MaquinaResponseDTO buscarPorId(@PathVariable Long idMaquina){
         return service.buscarPorId(idMaquina);
     }
 
@@ -55,7 +55,7 @@ public class MaquinaController {
     }
 
     @GetMapping("/modelo/setor")
-    public List<MaquinaResponseDTO> buscarPorModeloESetor(@RequestParam String modelo, Long idSetor){
+    public List<MaquinaResponseDTO> buscarPorModeloESetor(@RequestParam String modelo, @RequestParam Long idSetor){
         return service.buscarPorModeloESetor(modelo, idSetor);
     }
 

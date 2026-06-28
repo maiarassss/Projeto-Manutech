@@ -8,6 +8,7 @@ import com.manutech.ManuTech.exception.RegraDeNegocioException;
 import com.manutech.ManuTech.model.Maquina;
 import com.manutech.ManuTech.model.Setor;
 import com.manutech.ManuTech.repository.MaquinaRepository;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,7 +20,7 @@ public class MaquinaService {
     private final OrdemServicoService ordemService;
     private final SetorService setorService;
 
-    public MaquinaService(MaquinaRepository repository, OrdemServicoService ordemService, SetorService setorService){
+    public MaquinaService(MaquinaRepository repository, @Lazy OrdemServicoService ordemService, SetorService setorService){
         this.repository = repository;
         this.ordemService = ordemService;
         //apesar da máquina em si ser independente da ordem, o histórico dela não é
@@ -43,6 +44,12 @@ public class MaquinaService {
                 maquina.getSetor().getNomeSetor()
         );
     }
+
+    //metodo para que o estado de atividade da maquina possa ser salvo conforme o status da ordem de servico
+    public void salvarEntidade(Maquina maquina){
+        repository.save(maquina);
+    }
+
 
     public MaquinaResponseDTO buscarPorId(Long idMaquina){
         Maquina maquina = buscarEntidade(idMaquina);
@@ -120,8 +127,9 @@ public class MaquinaService {
         //primeiro busca no banco o id do setor informado no request
         Setor setor = setorService.buscarEntidade(dto.idSetor());
         maquina.setSetor(setor); //se existir traz esse mesmo setor(entidade) para dentro da entidade maquina
+        Maquina maquinaSalva = repository.save(maquina);
 
-        return toResponseDTO(maquina); //como vai converter em dto, o que fica salvo no response ainda é apenas o idSetor
+        return toResponseDTO(maquinaSalva); //como vai converter em dto, o que fica salvo no response ainda é apenas o idSetor
     }
 
 //    //quem faz a atualização da máquina? se for o gestor ele tem acesso ao id mas se for o tecnico não
@@ -137,8 +145,9 @@ public class MaquinaService {
         //mesma situacao do salvar
         Setor setor = setorService.buscarEntidade(dto.idSetor());
         maquina.setSetor(setor);
+        Maquina maquinaSalva = repository.save(maquina);
 
-        return toResponseDTO(maquina);
+        return toResponseDTO(maquinaSalva);
     }
 
     public void deletarMaquina(Long idMaquina){
@@ -149,5 +158,6 @@ public class MaquinaService {
         if(maquina.getAtiva() == true || !maquina.getListaOrdens().isEmpty()){
             throw new RegraDeNegocioException("Não é possível excluir máquinas ativas ou com ordens pendentes.");
         }
+        repository.delete(maquina);
     }
 }
