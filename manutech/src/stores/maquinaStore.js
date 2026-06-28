@@ -1,24 +1,101 @@
-import { ref } from 'vue'
-import { defineStore } from 'pinia'
+import { defineStore } from "pinia";
+import { ref } from "vue";
 
-export const useMaquinasStore = defineStore('maquinas', () => {
+export const useMaquinasStore = defineStore("maquinas", () => {
   const maquinas = ref([
-    { id: 1, nome: 'Máquina A' },
-    { id: 2, nome: 'Máquina B' },
-    { id: 3, nome: 'Máquina C' },
-  ])
+    {
+      idMaquina: 1,
+      codigoIdentificador: "CORT-001",
+      modelo: "Cortadeira Hidráulica",
+      nomeSetor: "Corte",
+      ativa: true,
+    },
+    {
+      idMaquina: 2,
+      codigoIdentificador: "COST-002",
+      modelo: "Máquina de Costura Industrial",
+      nomeSetor: "Costura",
+      ativa: true,
+    },
+    {
+      idMaquina: 3,
+      codigoIdentificador: "MONT-003",
+      modelo: "Máquina de Montagem de Cabedal",
+      nomeSetor: "Montagem",
+      ativa: false,
+    },
+    {
+      idMaquina: 4,
+      codigoIdentificador: "COLA-004",
+      modelo: "Aplicadora de Cola",
+      nomeSetor: "Montagem",
+      ativa: true,
+    },
+    {
+      idMaquina: 5,
+      codigoIdentificador: "PREN-005",
+      modelo: "Prensa Hidráulica",
+      nomeSetor: "Acabamento",
+      ativa: true,
+    },
+    {
+      idMaquina: 6,
+      codigoIdentificador: "LIXA-006",
+      modelo: "Lixadeira de Couro",
+      nomeSetor: "Acabamento",
+      ativa: false,
+    },
+  ]);
 
-  function excluirMaquina(id) {
-    maquinas.value = maquinas.value.filter(m => m.id !== id)
+  const loading = ref(false);
+  const error = ref(null);
+
+  async function buscarMaquinas() {
+    return maquinas.value;
   }
 
-  function adicionarMaquina(maquina) {
-    maquinas.value.push(maquina)
+  async function buscarMaquinaPorId(id) {
+    return maquinas.value.find((maquina) => maquina.idMaquina == id);
+  }
+
+  async function adicionarMaquina(maquina) {
+    const novaMaquina = {
+      idMaquina: Date.now(),
+      ...maquina,
+    };
+
+    maquinas.value.push(novaMaquina);
+
+    return novaMaquina;
+  }
+
+  async function atualizarMaquina(id, maquina) {
+    const index = maquinas.value.findIndex((m) => m.idMaquina == id);
+
+    if (index !== -1) {
+      maquinas.value[index] = {
+        idMaquina: Number(id),
+        ...maquina,
+      };
+    }
+
+    return maquinas.value[index];
+  }
+
+  async function excluirMaquina(id) {
+    maquinas.value = maquinas.value.filter(
+      (maquina) => maquina.idMaquina != id,
+    );
   }
 
   return {
     maquinas,
+    loading,
+    error,
+    buscarMaquinas,
+    buscarMaquinaPorId,
+    adicionarMaquina,
+    atualizarMaquina,
     excluirMaquina,
-    adicionarMaquina
-  }
-})
+  };
+});

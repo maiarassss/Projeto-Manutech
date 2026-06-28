@@ -1,38 +1,116 @@
 <script setup>
 import { ref } from "vue";
 import { RouterLink, RouterView } from "vue-router";
+import { Menu, Home, Users, Wrench, Cpu, Search } from "lucide-vue-next";
 
-const sidebarOpen = ref(true);
+const sidebarOpen = ref(false);
+
+function abrirSidebar() {
+  sidebarOpen.value = true;
+}
+
+function alternarSidebar() {
+  sidebarOpen.value = !sidebarOpen.value;
+}
+
+function fecharSidebar() {
+  sidebarOpen.value = false;
+}
 </script>
 
 <template>
   <header class="navbar">
-    <button class="menu-button" @click="sidebarOpen = !sidebarOpen">☰</button>
+    <button class="menu-button" @click="alternarSidebar">
+      <Menu :size="28" />
+    </button>
+
     <h1>MANUTECH</h1>
-    <input type="text" placeholder="Pesquisar..." class="search-bar" />
+
+    <div class="search-container">
+      <Search :size="18" />
+      <input type="text" placeholder="Pesquisar..." class="search-bar" />
+    </div>
   </header>
 
-  <aside class="sidebar" :class="{ collapsed: !sidebarOpen }">
-    <RouterLink to="/">Início</RouterLink>
-    <RouterLink to="/tecnicos">Técnicos</RouterLink>
-    <RouterLink to="/ordens">Ordens</RouterLink>
-    <RouterLink to="/maquinas">Máquinas</RouterLink>
+  <aside class="sidebar" :class="{ aberta: sidebarOpen }" @click="abrirSidebar">
+    <RouterLink
+      to="/"
+      class="item-menu"
+      active-class="ativo"
+      @click.stop="fecharSidebar"
+    >
+      <Home :size="22" />
+      <span v-if="sidebarOpen">Início</span>
+    </RouterLink>
+
+    <RouterLink
+      to="/tecnicos"
+      class="item-menu"
+      active-class="ativo"
+      @click.stop="fecharSidebar"
+    >
+      <Users :size="22" />
+      <span v-if="sidebarOpen">Técnicos</span>
+    </RouterLink>
+
+    <RouterLink
+      to="/ordens"
+      class="item-menu"
+      active-class="ativo"
+      @click.stop="fecharSidebar"
+    >
+      <Wrench :size="22" />
+      <span v-if="sidebarOpen">Ordens</span>
+    </RouterLink>
+
+    <RouterLink
+      to="/maquinas"
+      class="item-menu"
+      active-class="ativo"
+      @click.stop="fecharSidebar"
+    >
+      <Cpu :size="22" />
+      <span v-if="sidebarOpen">Máquinas</span>
+    </RouterLink>
   </aside>
 
-  <main class="content" :class="{ shifted: sidebarOpen }">
-    <RouterView />
+  <main class="content">
+    <div class="page-wrapper">
+      <RouterView />
+    </div>
   </main>
 </template>
 
 <style>
+*
+html,
+body,
+#app {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+#app {
+  max-width: none !important;
+  text-align: initial !important;
+}
+
 body {
-  font-family:
-    sans-serif,
-    Segoe UI;
+  display: block !important;
+  place-items: initial !important;
+  min-width: 100%;
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", sans-serif;
   background: #f4f6f9;
 }
 
-/*NAVBAR*/
+/* NAVBAR */
 
 .navbar {
   position: fixed;
@@ -40,90 +118,119 @@ body {
   left: 0;
   right: 0;
   height: 70px;
+
   background: #144e94;
+  color: white;
+
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 30px;
-  color: white;
   z-index: 1000;
 }
 
 .navbar h1 {
   flex: 1;
-  margin-left: 13%;
+  margin-left: 25px;
+
   color: white;
-  height: 130%;
+  font-size: 1.8rem;
+  letter-spacing: 1px;
 }
 
 .menu-button {
   background: none;
   border: none;
   color: white;
-  font-size: 28px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
   cursor: pointer;
 }
 
-.search-bar {
+.search-container {
   width: 280px;
   height: 40px;
-  border: none;
+
+  background: white;
+
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 0 12px;
+
   border-radius: 10px;
-  padding-left: 15px;
-  outline: none;
+
+  color: #64748b;
 }
 
-/* CORPO DA PÁGINA */
+.search-bar {
+  width: 100%;
+  height: 100%;
+
+  border: none;
+  outline: none;
+
+  font-size: 0.95rem;
+}
+
+/* SIDEBAR */
 
 .sidebar {
   position: fixed;
   top: 70px;
   left: 0;
-  height: calc(100vh - 70px);
 
-  width: 250px;
+  width: 70px;
+  height: calc(100vh - 70px);
 
   background: #1e293b;
 
   display: flex;
   flex-direction: column;
-  padding: 20px;
-  gap: 20px;
+  gap: 14px;
 
-  transition: width 0.3s ease;
+  padding: 20px 12px;
+
+  transition: width 0.25s ease;
+
   overflow: hidden;
+  cursor: pointer;
+
+  z-index: 900;
 }
 
-/* estado recolhido */
-.sidebar.collapsed {
-  width: 70px;
+.sidebar.aberta {
+  width: 250px;
 }
 
-.sidebar.collapsed {
-  width: 70px;
-}
+.item-menu {
+  min-height: 48px;
 
-.sidebar a {
   color: white;
   text-decoration: none;
-  font-size: 18px;
 
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 14px;
 
   padding: 12px;
-  border-radius: 6px;
+
+  border-radius: 8px;
 
   white-space: nowrap;
-  overflow: hidden;
+
+  transition: background 0.2s;
 }
 
-.sidebar a:hover {
+.item-menu:hover {
   background: #334155;
 }
 
-.sidebar a.router-link-active {
+.item-menu.ativo {
   background: #1565c0;
   font-weight: bold;
 }
@@ -132,12 +239,31 @@ body {
   font-size: 0;
 }
 
+.item-menu span {
+  font-size: 1rem;
+}
+
+/* CONTEÚDO CENTRALIZADO */
+
 .content {
   margin-top: 70px;
+  margin-left: 70px;
+
+  width: calc(100vw - 70px);
+  min-height: calc(100vh - 70px);
+
   padding: 40px;
 
-  margin-left: 250px;
+  background: #f4f6f9;
 
-  transition: none;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.page-wrapper {
+  width: min(100%, 1150px);
+  margin-left: auto;
+  margin-right: auto;
 }
 </style>
