@@ -20,7 +20,7 @@ public class Setor {
     private Long idSetor;
 
     //configurações de banco sempre na entidade
-    @Column(unique = true, nullable = false, length = 100) //*rn para que não haja mais setores com o mesmo nome
+    @Column(unique = true, nullable = false) //*rn para que não haja mais setores com o mesmo nome
     private String nomeSetor;
 
     @OneToMany(mappedBy = "setor")

@@ -47,6 +47,11 @@ public class SetorService {
     }
 
     public List<SetorResponseDTO> buscarSetorPorNome(String nomeSetor){
+
+        if(!repository.existsByNomeSetorIgnoreCase(nomeSetor)){ //apenas chamar um metodo boleano considera automat ele como true
+            throw new RegraDeNegocioException("O setor informado não existe.");
+        }
+
         return repository.findByNomeSetorContainingIgnoreCase(nomeSetor)
                 .stream().map(this::toResponseDTO).toList();
     }
@@ -72,9 +77,12 @@ public class SetorService {
     public SetorResponseDTO atualizarSetor (Long idSetor, SetorRequestDTO dto){
 
         //primeiro busca o setor informado
-        Setor setor = repository.findById(idSetor)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Setor não encotrado!"));
+        Setor setor = buscarEntidade(idSetor);
 
+        //para não atualizar com o mesmo nome (porque assim nem precisa atualizar )
+        if(repository.existsByNomeSetorIgnoreCase(dto.nomeSetor())){
+            throw new RegraDeNegocioException("O nome informado já está cadastrado.");
+        }
         setor.setNomeSetor(dto.nomeSetor());
         Setor setorAtualizado = repository.save(setor);
 
