@@ -3,11 +3,13 @@ package com.manutech.ManuTech.service;
 import com.manutech.ManuTech.dto.TecnicoRequestDTO;
 import com.manutech.ManuTech.dto.TecnicoResponseDTO;
 import com.manutech.ManuTech.exception.RecursoNaoEncontradoException;
+import com.manutech.ManuTech.exception.RegraDeNegocioException;
 import com.manutech.ManuTech.model.Setor;
 import com.manutech.ManuTech.model.Tecnico;
 import com.manutech.ManuTech.repository.TecnicoRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -51,6 +53,11 @@ public class TecnicoService {
 
     //lista técnicos por nome
     public List<TecnicoResponseDTO> buscarPorNome(String nome){
+
+        if(!repository.existsByNomeIgnoreCase(nome)){ //apenas chamar um metodo boleano considera automat ele como true
+            throw new RegraDeNegocioException("O técnico informado não está cadastrado.");
+        }
+
         return repository.findByNomeContainingIgnoreCase(nome)
                 .stream().map(this::toResponseDTO).toList();
                 // cada item listado é convertido em dto s
@@ -58,6 +65,8 @@ public class TecnicoService {
 
     //lista tdos os técnicos relacionados ao setor informado
     public List<TecnicoResponseDTO> listarTecnicosPorSetor(Long idSetor){
+        Setor setor = setorService.buscarEntidade(idSetor);
+
         return repository.findBySetoresAtendidosIdSetor(idSetor)
                 .stream().map(this::toResponseDTO).toList();
     }
@@ -71,10 +80,11 @@ public class TecnicoService {
     //metodo que vai percorrer a lista de id setores(do tecnico) e para cada id usa o metodo de buscar entidade para
     //retornar o setor correspondente e guardar ele(s) em uma outra lista
     public List<Setor> buscarSetores(List<Long> idsSetores) {
-        return idsSetores
-                .stream()
-                .map(setorService::buscarEntidade)
-                .toList();
+        return new ArrayList<>( //arraylist para que não retorne uma lista imutável
+                idsSetores.stream()
+                        .map(setorService::buscarEntidade)
+                        .toList()
+        );
     }
 
 
