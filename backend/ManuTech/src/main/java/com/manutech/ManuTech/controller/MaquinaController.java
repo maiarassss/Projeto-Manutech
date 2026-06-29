@@ -31,7 +31,7 @@ public class MaquinaController {
 
     @GetMapping("/setor")
     public List<MaquinaResponseDTO> listarPorSetor(@RequestParam Long idSetor){
-        return service.listarMaquinasPorSetor(idSetor);
+        return service.buscarMaquinasPorSetor(idSetor);
     }
 
     @GetMapping("/ordens")
@@ -45,7 +45,7 @@ public class MaquinaController {
     }
 
     @GetMapping("/codigo")
-    public MaquinaResponseDTO buscarPorCodigo(@RequestParam String codigoIdentificador){
+    public List<MaquinaResponseDTO> buscarPorCodigo(@RequestParam String codigoIdentificador){
         return service.buscarPorCodigo(codigoIdentificador);
     }
 

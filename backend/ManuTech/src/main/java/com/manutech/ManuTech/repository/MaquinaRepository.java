@@ -8,8 +8,8 @@ import java.util.Optional;
 
 public interface MaquinaRepository extends JpaRepository<Maquina, Long> {
 
-    //ao invés de retornar uma lista, retorna um objeto ou um erro caso não encontre
-    Optional<Maquina> findByCodigoIdentificador(String codigoIdentificador);
+    //retorna uma lista para conseguir usar o containing
+    List<Maquina> findByCodigoIdentificadorContainingIgnoreCase(String codigoIdentificador);
 
     List<Maquina> findByModeloContainingIgnoreCase(String modelo);
 
@@ -20,6 +20,7 @@ public interface MaquinaRepository extends JpaRepository<Maquina, Long> {
     //para listar máquinas de determinado modelo e setor; ajuste na sintaxe
     List<Maquina> findByModeloAndSetorIdSetor(String modelo, Long idSetor);
 
-    //não acho que faça sentido um findByOrdemId porque se eu sei qual é o id da ordem eu sei também qual é a ordem e qual máquina ela atende
+    boolean existsByCodigoIdentificadorIgnoreCase(String codigo);
+    //apenas para verificar se o mesmo codigo pretende ser cadastrado novamente
 
 }

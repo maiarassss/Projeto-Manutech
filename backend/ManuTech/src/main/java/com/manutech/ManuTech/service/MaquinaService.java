@@ -56,15 +56,30 @@ public class MaquinaService {
         return toResponseDTO(maquina);
     }
 
-    public MaquinaResponseDTO buscarPorCodigo(String codigoIdentificador){
-        Maquina maquina = repository.findByCodigoIdentificador(codigoIdentificador)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Máquina não encontrada!"));
+    //retorna lista
+    public List<MaquinaResponseDTO> buscarPorCodigo(String codigoIdentificador){
 
-        return toResponseDTO(maquina);
+        List<Maquina> maquinas = repository.findByCodigoIdentificadorContainingIgnoreCase(codigoIdentificador);
+       //guarda a busca com valor aproximado em uma lista
+
+        if (maquinas.isEmpty()) { //se não houver registros com o valor informado, retorna mensagem
+            throw new RecursoNaoEncontradoException("Máquina não encontrada!");
+        }
+
+        return maquinas
+                .stream()
+                .map(this::toResponseDTO)
+                .toList();
     }
 
     public List<MaquinaResponseDTO> buscarPorModelo(String modelo){
-        return repository.findByModeloContainingIgnoreCase(modelo)
+
+        List<Maquina> maquinas = repository.findByModeloContainingIgnoreCase(modelo);
+
+        if (maquinas.isEmpty()) { //se não houver registros com o valor informado, retorna mensagem
+            throw new RecursoNaoEncontradoException("Máquina não encontrada!");
+        }
+        return maquinas
                 .stream()
                 .map(this::toResponseDTO)
                 .toList();
@@ -74,7 +89,16 @@ public class MaquinaService {
     //**manter id setor para testar a selecao no front
     public List<MaquinaResponseDTO> buscarPorModeloESetor(String modelo, Long idSetor){
 
-        return repository.findByModeloAndSetorIdSetor(modelo, idSetor)
+        //verifica se o setor existe
+        setorService.buscarEntidade(idSetor);
+
+        List<Maquina> maquinas = repository.findByModeloAndSetorIdSetor(modelo, idSetor);
+
+        if (maquinas.isEmpty()) {
+            throw new RecursoNaoEncontradoException("Máquina não encontrada!");
+        }
+
+        return maquinas
                 .stream()
                 .map(this::toResponseDTO)
                 .toList();
@@ -97,7 +121,11 @@ public class MaquinaService {
     }
 
     //lista as máquinas atráves do setor indicado
-    public List<MaquinaResponseDTO> listarMaquinasPorSetor(Long idSetor){
+    public List<MaquinaResponseDTO> buscarMaquinasPorSetor(Long idSetor){
+
+        //verifica se existe
+        setorService.buscarEntidade(idSetor);
+
         return repository.findBySetorIdSetor(idSetor)
                 .stream()
                 .map(this::toResponseDTO)
@@ -116,7 +144,7 @@ public class MaquinaService {
 
         //**rn cod identificador unico
         //verifica se o código identificador inserido no request já existe no banco de dados
-        if (repository.findByCodigoIdentificador(dto.codigoIdentificador()).isPresent()) {
+        if (repository.existsByCodigoIdentificadorIgnoreCase(dto.codigoIdentificador())) {
             throw new RegraDeNegocioException("Código identificador já registrado.");
         }
         maquina.setCodigoIdentificador(dto.codigoIdentificador());
