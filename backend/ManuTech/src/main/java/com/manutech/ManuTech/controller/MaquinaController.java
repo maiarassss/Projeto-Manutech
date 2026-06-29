@@ -39,7 +39,7 @@ public class MaquinaController {
         return service.listarOrdens(codigoIdentificador);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{idMaquina}")
     public MaquinaResponseDTO buscarPorId(@PathVariable Long idMaquina){
         return service.buscarPorId(idMaquina);
     }
