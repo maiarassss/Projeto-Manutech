@@ -3,6 +3,7 @@ package com.manutech.ManuTech.handler;
 import com.manutech.ManuTech.exception.RecursoNaoEncontradoException;
 import com.manutech.ManuTech.exception.RegraDeNegocioException;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -34,6 +35,15 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, String>> tratarRegraDeNegocio(RegraDeNegocioException ex){
         Map<String, String> erro = new HashMap<>();
         erro.put("erro", ex.getMessage());
+
+        return ResponseEntity.badRequest().body(erro);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Map<String, String>> tratarJson(HttpMessageNotReadableException ex) {
+
+        Map<String, String> erro = new HashMap<>();
+        erro.put("erro", "Valor inválido.");
 
         return ResponseEntity.badRequest().body(erro);
     }

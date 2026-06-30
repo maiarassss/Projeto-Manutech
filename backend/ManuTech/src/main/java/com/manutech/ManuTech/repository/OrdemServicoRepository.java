@@ -17,7 +17,7 @@ public interface OrdemServicoRepository extends JpaRepository<OrdemServico, Long
     List<OrdemServico> findByStatus(StatusOrdem status);
 
     //alterar id para codigo para que o tecnico possa pesquisar as ordens, ele não tem acesso ao id
-    List<OrdemServico> findByMaquinaCodigoIdentificador(String codigoIdentificador);
+    List<OrdemServico> findByMaquinaCodigoIdentificadorContainingIgnoreCase(String codigoIdentificador);
 
     //consulta de ordens pelo nome do setor da máquina
     List<OrdemServico> findByMaquinaSetorNomeSetorContainingIgnoreCase(String nomeSetor);

@@ -64,10 +64,15 @@ public class OrdemServicoService {
         return toResponseDTO(ordem);
     }
 
-    public List<OrdemServicoResponseDTO> buscarPorTitulo(String titulo){
+    public List<OrdemServicoResponseDTO> buscarPorTitulo(String titulo) {
 
-        return repository.findByTituloContainingIgnoreCase(titulo)
-                .stream()
+        List<OrdemServico> ordens = repository.findByTituloContainingIgnoreCase(titulo);
+
+        if (ordens.isEmpty()) {
+            throw new RecursoNaoEncontradoException("Ordem não encontrada.");
+        }
+
+        return ordens.stream()
                 .map(this::toResponseDTO)
                 .toList();
     }
@@ -98,8 +103,14 @@ public class OrdemServicoService {
 
     //listagem de ordens de determinada máquina através de seu codigo identificador
     public List<OrdemServicoResponseDTO> listarOrdensPorMaquina(String codigoIdentificador){
-        return repository.findByMaquinaCodigoIdentificador(codigoIdentificador)
-                .stream()
+
+        List<OrdemServico> ordens = repository.findByMaquinaCodigoIdentificadorContainingIgnoreCase(codigoIdentificador);
+
+        if (ordens.isEmpty()) {
+            throw new RecursoNaoEncontradoException("Ordem não encontrada.");
+        }
+
+        return ordens.stream()
                 .map(this::toResponseDTO)
                 .toList();
     }
@@ -107,15 +118,28 @@ public class OrdemServicoService {
 
     //puxa o nome do setor através da maquina associada, e traz as ordens de máquinas desse mesmo setor
     public List<OrdemServicoResponseDTO> listarOrdensPorSetor(String nomeSetor){
-        return repository.findByMaquinaSetorNomeSetorContainingIgnoreCase(nomeSetor)
-                .stream()
+        List<OrdemServico> ordens = repository.findByMaquinaSetorNomeSetorContainingIgnoreCase(nomeSetor);
+
+        if (ordens.isEmpty()) {
+            throw new RecursoNaoEncontradoException("Ordem não encontrada.");
+        }
+
+        return ordens.stream()
                 .map(this::toResponseDTO)
                 .toList();
     }
 
     public List<OrdemServicoResponseDTO> listarOrdensPorTecnico(Long idTecnico) {
-        return repository.findByTecnicoIdTecnico(idTecnico)
-                .stream()
+        tecnicoService.buscarEntidade(idTecnico);
+        //se o tecnico não existir ja lança o erro
+
+        List<OrdemServico> ordens = repository.findByTecnicoIdTecnico(idTecnico);
+
+        if (ordens.isEmpty()) {
+            throw new RecursoNaoEncontradoException("Ordem não encontrada.");
+        }
+
+        return ordens.stream()
                 .map(this::toResponseDTO)
                 .toList();
     }
