@@ -7,6 +7,7 @@ import MaquinasView from "../views/maquinas/Maquinas.vue";
 import MaquinasCadastro from "../views/maquinas/MaquinasCadastro.vue";
 import TecnicosCadastro from "@/views/tecnicos/TecnicosCadastro.vue";
 import OrdensCadastrar from "../views/ordens/OrdensCadastrar.vue";
+import LoginView from "../views/Login.vue";
 
 const router = createRouter({
   history: createWebHistory(),
@@ -14,6 +15,10 @@ const router = createRouter({
     {
       path: "/",
       component: InicioView,
+    },
+    {
+      path: "/login",
+      component: LoginView,
     },
     {
       path: "/ordens",

@@ -35,7 +35,7 @@ const totalOrdens = computed(() => ordemStore.ordens.length);
 
 const ordensEmAndamento = computed(
   () =>
-    ordemStore.ordens.filter((ordem) => ordem.status === "ANDAMENTO").length,
+    ordemStore.ordens.filter((ordem) => ordem.status === "EM_ANDAMENTO").length,
 );
 
 const ordensCriticas = computed(

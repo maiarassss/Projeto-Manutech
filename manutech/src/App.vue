@@ -1,9 +1,13 @@
 <script setup>
-import { ref } from "vue";
-import { RouterLink, RouterView } from "vue-router";
-import { Menu, Home, Users, Wrench, Cpu, Search } from "lucide-vue-next";
+import { ref, computed } from "vue";
+import { RouterLink, RouterView, useRoute } from "vue-router";
+import { Menu, Home, Users, Wrench, Cpu, UserCircle } from "lucide-vue-next";
+
+const route = useRoute();
 
 const sidebarOpen = ref(false);
+
+const ehTelaLogin = computed(() => route.path === "/login");
 
 function abrirSidebar() {
   sidebarOpen.value = true;
@@ -19,90 +23,79 @@ function fecharSidebar() {
 </script>
 
 <template>
-  <header class="navbar">
-    <button class="menu-button" @click="alternarSidebar">
-      <Menu :size="28" />
-    </button>
+  <template v-if="!ehTelaLogin">
+    <header class="navbar">
+      <button class="menu-button" @click="alternarSidebar">
+        <Menu :size="28" />
+      </button>
 
-    <h1>MANUTECH</h1>
+      <h1>MANUTECH</h1>
 
-    <div class="search-container">
-      <Search :size="18" />
-      <input type="text" placeholder="Pesquisar..." class="search-bar" />
-    </div>
-  </header>
+      <RouterLink to="/login" class="login-atalho">
+        <UserCircle :size="34" />
+      </RouterLink>
+    </header>
 
-  <aside class="sidebar" :class="{ aberta: sidebarOpen }" @click="abrirSidebar">
-    <RouterLink
-      to="/"
-      class="item-menu"
-      active-class="ativo"
-      @click.stop="fecharSidebar"
+    <aside
+      class="sidebar"
+      :class="{ aberta: sidebarOpen }"
+      @click="abrirSidebar"
     >
-      <Home :size="22" />
-      <span v-if="sidebarOpen">Início</span>
-    </RouterLink>
+      <RouterLink
+        to="/"
+        class="item-menu"
+        active-class="ativo"
+        @click.stop="fecharSidebar"
+      >
+        <Home :size="22" />
+        <span v-if="sidebarOpen">Início</span>
+      </RouterLink>
 
-    <RouterLink
-      to="/tecnicos"
-      class="item-menu"
-      active-class="ativo"
-      @click.stop="fecharSidebar"
-    >
-      <Users :size="22" />
-      <span v-if="sidebarOpen">Técnicos</span>
-    </RouterLink>
+      <RouterLink
+        to="/tecnicos"
+        class="item-menu"
+        active-class="ativo"
+        @click.stop="fecharSidebar"
+      >
+        <Users :size="22" />
+        <span v-if="sidebarOpen">Técnicos</span>
+      </RouterLink>
 
-    <RouterLink
-      to="/ordens"
-      class="item-menu"
-      active-class="ativo"
-      @click.stop="fecharSidebar"
-    >
-      <Wrench :size="22" />
-      <span v-if="sidebarOpen">Ordens</span>
-    </RouterLink>
+      <RouterLink
+        to="/ordens"
+        class="item-menu"
+        active-class="ativo"
+        @click.stop="fecharSidebar"
+      >
+        <Wrench :size="22" />
+        <span v-if="sidebarOpen">Ordens</span>
+      </RouterLink>
 
-    <RouterLink
-      to="/maquinas"
-      class="item-menu"
-      active-class="ativo"
-      @click.stop="fecharSidebar"
-    >
-      <Cpu :size="22" />
-      <span v-if="sidebarOpen">Máquinas</span>
-    </RouterLink>
-  </aside>
+      <RouterLink
+        to="/maquinas"
+        class="item-menu"
+        active-class="ativo"
+        @click.stop="fecharSidebar"
+      >
+        <Cpu :size="22" />
+        <span v-if="sidebarOpen">Máquinas</span>
+      </RouterLink>
+    </aside>
 
-  <main class="content">
-    <div class="page-wrapper">
-      <RouterView />
-    </div>
-  </main>
+    <main class="content">
+      <div class="page-wrapper">
+        <RouterView />
+      </div>
+    </main>
+  </template>
+
+  <template v-else>
+    <RouterView />
+  </template>
 </template>
 
 <style>
-*
-html,
-body,
-#app {
-  width: 100%;
-  min-height: 100%;
-  margin: 0;
-  padding: 0;
-}
-
-#app {
-  max-width: none !important;
-  text-align: initial !important;
-}
-
-body {
-  display: block !important;
-  place-items: initial !important;
-  min-width: 100%;
-}
-{
+* {
   box-sizing: border-box;
 }
 
@@ -155,31 +148,18 @@ body {
   cursor: pointer;
 }
 
-.search-container {
-  width: 280px;
-  height: 40px;
-
-  background: white;
+.login-atalho {
+  color: white;
 
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
 
-  padding: 0 12px;
-
-  border-radius: 10px;
-
-  color: #64748b;
+  transition: 0.2s;
 }
 
-.search-bar {
-  width: 100%;
-  height: 100%;
-
-  border: none;
-  outline: none;
-
-  font-size: 0.95rem;
+.login-atalho:hover {
+  opacity: 0.8;
 }
 
 /* SIDEBAR */

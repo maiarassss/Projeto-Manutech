@@ -15,7 +15,7 @@ const tecnicoStore = useTecnicosStore();
 const titulo = ref("");
 const descricao = ref("");
 const prioridade = ref("MEDIA");
-const status = ref("ANDAMENTO");
+const status = ref("ABERTA");
 const idMaquina = ref(null);
 const idTecnico = ref(null);
 
@@ -63,17 +63,8 @@ async function salvar() {
     return;
   }
 
-  if (!idTecnico.value) {
-    erro.value = "Selecione o técnico responsável.";
-    return;
-  }
-
   const maquinaSelecionada = maquinaStore.maquinas.find(
     (maquina) => maquina.idMaquina == idMaquina.value,
-  );
-
-  const tecnicoSelecionado = tecnicoStore.tecnicos.find(
-    (tecnico) => tecnico.idTecnico == idTecnico.value,
   );
 
   if (!maquinaSelecionada) {
@@ -81,10 +72,9 @@ async function salvar() {
     return;
   }
 
-  if (!tecnicoSelecionado) {
-    erro.value = "Técnico selecionado não encontrado.";
-    return;
-  }
+  const tecnicoSelecionado = tecnicoStore.tecnicos.find(
+    (tecnico) => tecnico.idTecnico == idTecnico.value,
+  );
 
   const ordem = {
     titulo: titulo.value.trim(),
@@ -97,8 +87,8 @@ async function salvar() {
     modelo: maquinaSelecionada.modelo,
     nomeSetor: maquinaSelecionada.nomeSetor,
 
-    idTecnico: tecnicoSelecionado.idTecnico,
-    nomeTecnico: tecnicoSelecionado.nome,
+    idTecnico: tecnicoSelecionado?.idTecnico || null,
+    nomeTecnico: tecnicoSelecionado?.nome || "Não atribuído",
   };
 
   if (isEdit.value) {
@@ -137,7 +127,8 @@ async function salvar() {
       </select>
 
       <select v-model="status">
-        <option value="ANDAMENTO">Em andamento</option>
+        <option value="ABERTA">Aberta</option>
+        <option value="EM_ANDAMENTO">Em andamento</option>
         <option value="CONCLUIDA">Concluída</option>
         <option value="CANCELADA">Cancelada</option>
       </select>
@@ -155,7 +146,7 @@ async function salvar() {
       </select>
 
       <select v-model.number="idTecnico">
-        <option :value="null">Selecione o técnico responsável</option>
+        <option :value="null">Técnico ainda não atribuído</option>
 
         <option
           v-for="tecnico in tecnicoStore.tecnicos"
