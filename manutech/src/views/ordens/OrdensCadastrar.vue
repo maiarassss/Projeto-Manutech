@@ -1,12 +1,139 @@
+<template>
+  <div class="pagina-cadastro">
+    <div class="card-cadastro">
+      <div class="cabecalho">
+        <div>
+          <h1>{{ editando ? "Editar ordem" : "Cadastrar ordem" }}</h1>
+          <p>Preencha os dados da ordem de serviço.</p>
+        </div>
+
+        <button class="btn-voltar" @click="voltar">Voltar</button>
+      </div>
+
+      <form @submit.prevent="salvarOrdem" class="formulario">
+        <div class="campo">
+          <label for="titulo">Título</label>
+          <input
+            id="titulo"
+            v-model="titulo"
+            type="text"
+            placeholder="Ex: Manutenção preventiva"
+          />
+        </div>
+
+        <div class="campo">
+          <label for="descricao">Descrição</label>
+          <textarea
+            id="descricao"
+            v-model="descricao"
+            rows="4"
+            placeholder="Descreva o problema ou serviço necessário..."
+          ></textarea>
+        </div>
+
+        <div class="linha-campos">
+          <div class="campo">
+            <label for="prioridade">Prioridade</label>
+            <select id="prioridade" v-model="prioridade">
+              <option value="BAIXA">Baixa</option>
+              <option value="MEDIA">Média</option>
+              <option value="ALTA">Alta</option>
+              <option value="CRITICA">Crítica</option>
+            </select>
+          </div>
+
+          <div class="campo">
+            <label for="status">Status</label>
+            <select id="status" v-model="status">
+              <option value="ABERTA">Aberta</option>
+              <option value="ANDAMENTO">Em andamento</option>
+              <option value="CONCLUIDA">Concluída</option>
+              <option value="CANCELADA">Cancelada</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="campo">
+          <label for="maquina">Máquina</label>
+          <select id="maquina" v-model="idMaquina">
+            <option :value="null">Selecione uma máquina</option>
+            <option
+              v-for="maquina in maquinasDisponiveis"
+              :key="maquina.idMaquina"
+              :value="maquina.idMaquina"
+            >
+              {{ maquina.codigoIdentificador }} - {{ maquina.modelo }}
+            </option>
+          </select>
+
+          <span v-if="maquinaStore.loading" class="mensagem-apoio">
+            Carregando máquinas...
+          </span>
+
+          <span v-if="maquinaStore.error" class="mensagem-erro">
+            {{ maquinaStore.error }}
+          </span>
+        </div>
+
+        <div class="campo">
+          <label for="tecnico">Técnico responsável</label>
+          <select id="tecnico" v-model="idTecnico">
+            <option :value="null">Técnico ainda não atribuído</option>
+            <option
+              v-for="tecnico in tecnicoStore.tecnicos"
+              :key="tecnico.idTecnico"
+              :value="tecnico.idTecnico"
+            >
+              {{ tecnico.nome }}
+            </option>
+          </select>
+
+          <span v-if="tecnicoStore.loading" class="mensagem-apoio">
+            Carregando técnicos...
+          </span>
+
+          <span v-if="tecnicoStore.error" class="mensagem-erro">
+            {{ tecnicoStore.error }}
+          </span>
+        </div>
+
+        <p v-if="erroFormulario" class="erro-formulario">
+          {{ erroFormulario }}
+        </p>
+
+        <div class="acoes">
+          <button type="button" class="btn-cancelar" @click="voltar">
+            Cancelar
+          </button>
+
+          <button
+            type="submit"
+            class="btn-salvar"
+            :disabled="ordemStore.loading"
+          >
+            {{
+              ordemStore.loading
+                ? "Salvando..."
+                : editando
+                  ? "Salvar alterações"
+                  : "Cadastrar"
+            }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</template>
+
 <script setup>
-import { ref, onMounted } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { ref, computed, onMounted } from "vue";
+import { useRouter, useRoute } from "vue-router";
 import { useOrdensStore } from "@/stores/ordemStore";
 import { useMaquinasStore } from "@/stores/maquinaStore";
 import { useTecnicosStore } from "@/stores/tecnicoStore";
 
-const route = useRoute();
 const router = useRouter();
+const route = useRoute();
 
 const ordemStore = useOrdensStore();
 const maquinaStore = useMaquinasStore();
@@ -14,25 +141,25 @@ const tecnicoStore = useTecnicosStore();
 
 const titulo = ref("");
 const descricao = ref("");
-const prioridade = ref("MEDIA");
+const prioridade = ref("BAIXA");
 const status = ref("ABERTA");
 const idMaquina = ref(null);
 const idTecnico = ref(null);
+const erroFormulario = ref("");
 
-const erro = ref("");
-const isEdit = ref(false);
+const editando = computed(() => !!route.params.id);
+
+const maquinasDisponiveis = computed(() => {
+  return maquinaStore.maquinas.filter((maquina) => maquina.ativa);
+});
 
 onMounted(async () => {
-  await ordemStore.buscarOrdens();
   await maquinaStore.buscarMaquinas();
   await tecnicoStore.buscarTecnicos();
+  await ordemStore.buscarOrdens();
 
-  const id = route.params.id;
-
-  if (id) {
-    isEdit.value = true;
-
-    const ordem = await ordemStore.buscarOrdemPorId(id);
+  if (editando.value) {
+    const ordem = ordemStore.buscarOrdemPorId(Number(route.params.id));
 
     if (ordem) {
       titulo.value = ordem.titulo;
@@ -45,200 +172,199 @@ onMounted(async () => {
   }
 });
 
-async function salvar() {
-  erro.value = "";
+async function salvarOrdem() {
+  erroFormulario.value = "";
 
   if (!titulo.value.trim()) {
-    erro.value = "O título da ordem é obrigatório.";
+    erroFormulario.value = "Informe o título da ordem.";
     return;
   }
 
   if (!descricao.value.trim()) {
-    erro.value = "A descrição da ordem é obrigatória.";
+    erroFormulario.value = "Informe a descrição da ordem.";
     return;
   }
 
   if (!idMaquina.value) {
-    erro.value = "Selecione uma máquina.";
+    erroFormulario.value = "Selecione uma máquina.";
     return;
   }
-
-  const maquinaSelecionada = maquinaStore.maquinas.find(
-    (maquina) => maquina.idMaquina == idMaquina.value,
-  );
-
-  if (!maquinaSelecionada) {
-    erro.value = "Máquina selecionada não encontrada.";
-    return;
-  }
-
-  const tecnicoSelecionado = tecnicoStore.tecnicos.find(
-    (tecnico) => tecnico.idTecnico == idTecnico.value,
-  );
 
   const ordem = {
     titulo: titulo.value.trim(),
     descricao: descricao.value.trim(),
     prioridade: prioridade.value,
     status: status.value,
-
-    idMaquina: maquinaSelecionada.idMaquina,
-    codigoIdentificador: maquinaSelecionada.codigoIdentificador,
-    modelo: maquinaSelecionada.modelo,
-    nomeSetor: maquinaSelecionada.nomeSetor,
-
-    idTecnico: tecnicoSelecionado?.idTecnico || null,
-    nomeTecnico: tecnicoSelecionado?.nome || "Não atribuído",
+    idMaquina: Number(idMaquina.value),
+    idTecnico: idTecnico.value ? Number(idTecnico.value) : null,
   };
 
-  if (isEdit.value) {
-    await ordemStore.atualizarOrdem(route.params.id, ordem);
-  } else {
-    await ordemStore.adicionarOrdem(ordem);
-  }
+  try {
+    if (editando.value) {
+      await ordemStore.atualizarOrdem(Number(route.params.id), ordem);
+    } else {
+      await ordemStore.adicionarOrdem(ordem);
+    }
 
+    router.push("/ordens");
+  } catch (erro) {
+    erroFormulario.value =
+      "Não foi possível salvar a ordem. Verifique os dados e tente novamente.";
+  }
+}
+
+function voltar() {
   router.push("/ordens");
 }
 </script>
 
-<template>
-  <div class="container">
-    <h1>
-      {{ isEdit ? "Atualizar Ordem" : "Cadastro de Ordem" }}
-    </h1>
-
-    <form class="formulario">
-      <p v-if="erro" class="mensagem-erro">
-        {{ erro }}
-      </p>
-
-      <input v-model="titulo" type="text" placeholder="Título da ordem" />
-
-      <textarea
-        v-model="descricao"
-        placeholder="Descrição da manutenção"
-      ></textarea>
-
-      <select v-model="prioridade">
-        <option value="BAIXA">Baixa</option>
-        <option value="MEDIA">Média</option>
-        <option value="ALTA">Alta</option>
-        <option value="CRITICA">Crítica</option>
-      </select>
-
-      <select v-model="status">
-        <option value="ABERTA">Aberta</option>
-        <option value="ANDAMENTO">Em andamento</option>
-        <option value="CONCLUIDA">Concluída</option>
-        <option value="CANCELADA">Cancelada</option>
-      </select>
-
-      <select v-model.number="idMaquina">
-        <option :value="null">Selecione a máquina</option>
-
-        <option
-          v-for="maquina in maquinaStore.maquinas"
-          :key="maquina.idMaquina"
-          :value="maquina.idMaquina"
-        >
-          {{ maquina.codigoIdentificador }} - {{ maquina.modelo }}
-        </option>
-      </select>
-
-      <select v-model.number="idTecnico">
-        <option :value="null">Técnico ainda não atribuído</option>
-
-        <option
-          v-for="tecnico in tecnicoStore.tecnicos"
-          :key="tecnico.idTecnico"
-          :value="tecnico.idTecnico"
-        >
-          {{ tecnico.nome }}
-        </option>
-      </select>
-
-      <button type="button" @click="salvar">
-        {{ isEdit ? "Atualizar" : "Salvar" }}
-      </button>
-
-      <button type="button" class="cancelar" @click="router.push('/ordens')">
-        Cancelar
-      </button>
-    </form>
-  </div>
-</template>
-
 <style scoped>
-.container {
+.pagina-cadastro {
+  width: 100%;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding-top: 30px;
+  justify-content: center;
 }
 
-h1 {
-  color: #153b7a;
-  font-size: 2.6rem;
-  margin-bottom: 30px;
+.card-cadastro {
+  width: 100%;
+  max-width: 760px;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+}
+
+.cabecalho {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.cabecalho h1 {
+  font-size: 28px;
+  color: #1e3a8a;
+  margin-bottom: 6px;
+}
+
+.cabecalho p {
+  color: #64748b;
+  font-size: 15px;
 }
 
 .formulario {
   display: flex;
   flex-direction: column;
-  gap: 15px;
-  width: 450px;
+  gap: 18px;
 }
 
-input,
-select,
-textarea {
-  padding: 12px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  font-size: 1rem;
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-textarea {
-  min-height: 120px;
+.linha-campos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.campo label {
+  font-weight: 600;
+  color: #334155;
+}
+
+.campo input,
+.campo select,
+.campo textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 15px;
+  outline: none;
+  background: #ffffff;
   resize: vertical;
 }
 
-button {
-  background: #173f82;
-  color: white;
+.campo input:focus,
+.campo select:focus,
+.campo textarea:focus {
+  border-color: #2563eb;
+}
 
-  padding: 12px;
+.mensagem-apoio {
+  font-size: 13px;
+  color: #64748b;
+}
 
+.mensagem-erro,
+.erro-formulario {
+  font-size: 14px;
+  color: #dc2626;
+}
+
+.erro-formulario {
+  background: #fee2e2;
+  padding: 10px 12px;
+  border-radius: 8px;
+}
+
+.acoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.btn-voltar,
+.btn-cancelar,
+.btn-salvar {
   border: none;
-  border-radius: 8px;
-
-  font-weight: bold;
+  border-radius: 10px;
+  padding: 11px 18px;
+  font-weight: 600;
   cursor: pointer;
-
-  transition: 0.2s;
 }
 
-button:hover {
-  background: #123063;
+.btn-voltar,
+.btn-cancelar {
+  background: #e2e8f0;
+  color: #334155;
 }
 
-.cancelar {
-  background: #777;
+.btn-salvar {
+  background: #1e3a8a;
+  color: #ffffff;
 }
 
-.cancelar:hover {
-  background: #555;
+.btn-salvar:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
-.mensagem-erro {
-  background: #ffd9d9;
-  color: #b42318;
+.btn-voltar:hover,
+.btn-cancelar:hover {
+  background: #cbd5e1;
+}
 
-  padding: 12px;
+.btn-salvar:hover:not(:disabled) {
+  background: #1d4ed8;
+}
 
-  border-radius: 8px;
+@media (max-width: 700px) {
+  .cabecalho {
+    flex-direction: column;
+  }
 
-  font-weight: bold;
-  text-align: center;
+  .linha-campos {
+    grid-template-columns: 1fr;
+  }
+
+  .acoes {
+    flex-direction: column;
+  }
 }
 </style>

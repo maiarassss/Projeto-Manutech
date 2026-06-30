@@ -1,123 +1,119 @@
 import { ref } from "vue";
 import { defineStore } from "pinia";
+import { api } from "@/services/api";
 
 export const useTecnicosStore = defineStore("tecnicos", () => {
-  const setoresDisponiveis = ref([
-    {
-      idSetor: 1,
-      nomeSetor: "Corte",
-    },
-    {
-      idSetor: 2,
-      nomeSetor: "Costura",
-    },
-    {
-      idSetor: 3,
-      nomeSetor: "Montagem",
-    },
-    {
-      idSetor: 4,
-      nomeSetor: "Acabamento",
-    },
-  ]);
+  const tecnicos = ref([]);
+  const loading = ref(false);
+  const error = ref(null);
 
-  const tecnicos = ref([
-    {
-      idTecnico: 1,
-      nome: "João Silva",
-      telefone: "(48) 99999-1111",
-      setoresAtendidos: [
-        {
-          idSetor: 1,
-          nomeSetor: "Corte",
-        },
-        {
-          idSetor: 3,
-          nomeSetor: "Montagem",
-        },
-      ],
-    },
-    {
-      idTecnico: 2,
-      nome: "Maria Oliveira",
-      telefone: "(48) 99999-2222",
-      setoresAtendidos: [
-        {
-          idSetor: 2,
-          nomeSetor: "Costura",
-        },
-      ],
-    },
-    {
-      idTecnico: 3,
-      nome: "Pedro Santos",
-      telefone: "(48) 99999-3333",
-      setoresAtendidos: [
-        {
-          idSetor: 4,
-          nomeSetor: "Acabamento",
-        },
-      ],
-    },
-  ]);
+  function normalizarTecnico(tecnico) {
+    const setores =
+      tecnico.setoresAtendidos ||
+      tecnico.setores ||
+      tecnico.setoresResponseDTO ||
+      tecnico.setorResponseDTO ||
+      [];
 
-  async function buscarTecnicos() {
-    return tecnicos.value;
+    return {
+      idTecnico: tecnico.idTecnico,
+      nome: tecnico.nome,
+      telefone: tecnico.telefone,
+      setoresAtendidos: Array.isArray(setores)
+        ? setores.map((setor) => ({
+            idSetor: setor.idSetor,
+            nomeSetor: setor.nomeSetor,
+          }))
+        : [],
+    };
   }
 
-  async function buscarTecnicoPorId(id) {
-    return tecnicos.value.find((tecnico) => tecnico.idTecnico == id);
+  async function buscarTecnicos() {
+    loading.value = true;
+    error.value = null;
+
+    try {
+      const resposta = await api.get("/tecnicos");
+      tecnicos.value = resposta.data.map(normalizarTecnico);
+      return tecnicos.value;
+    } catch (erro) {
+      error.value = "Erro ao buscar técnicos.";
+      console.error(erro);
+      return [];
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  function buscarTecnicoPorId(id) {
+    return tecnicos.value.find((tecnico) => tecnico.idTecnico === id);
   }
 
   async function adicionarTecnico(tecnico) {
-    const setoresAtendidos = setoresDisponiveis.value.filter((setor) =>
-      tecnico.idsSetores.includes(setor.idSetor),
-    );
+    loading.value = true;
+    error.value = null;
 
-    const novoTecnico = {
-      idTecnico: Date.now(),
+    const tecnicoRequest = {
       nome: tecnico.nome,
       telefone: tecnico.telefone,
-      setoresAtendidos,
+      idsSetores: tecnico.idsSetores,
     };
 
-    tecnicos.value.push(novoTecnico);
+    try {
+      const resposta = await api.post("/tecnicos", tecnicoRequest);
+      const novoTecnico = normalizarTecnico(resposta.data);
 
-    return novoTecnico;
-  }
+      tecnicos.value.push(novoTecnico);
 
-  async function atualizarTecnico(id, tecnico) {
-    const index = tecnicos.value.findIndex((t) => t.idTecnico == id);
-
-    const setoresAtendidos = setoresDisponiveis.value.filter((setor) =>
-      tecnico.idsSetores.includes(setor.idSetor),
-    );
-
-    if (index !== -1) {
-      tecnicos.value[index] = {
-        idTecnico: Number(id),
-        nome: tecnico.nome,
-        telefone: tecnico.telefone,
-        setoresAtendidos,
-      };
+      return novoTecnico;
+    } catch (erro) {
+      error.value = "Erro ao cadastrar técnico.";
+      console.error(erro);
+      throw erro;
+    } finally {
+      loading.value = false;
     }
-
-    return tecnicos.value[index];
   }
 
-  async function excluirTecnico(id) {
-    tecnicos.value = tecnicos.value.filter(
-      (tecnico) => tecnico.idTecnico != id,
-    );
+  async function atualizarTecnico(id, tecnicoAtualizado) {
+    loading.value = true;
+    error.value = null;
+
+    const tecnicoRequest = {
+      nome: tecnicoAtualizado.nome,
+      telefone: tecnicoAtualizado.telefone,
+      idsSetores: tecnicoAtualizado.idsSetores,
+    };
+
+    try {
+      const resposta = await api.put(`/tecnicos/${id}`, tecnicoRequest);
+      const tecnicoSalvo = normalizarTecnico(resposta.data);
+
+      const index = tecnicos.value.findIndex(
+        (tecnico) => tecnico.idTecnico === id,
+      );
+
+      if (index !== -1) {
+        tecnicos.value[index] = tecnicoSalvo;
+      }
+
+      return tecnicoSalvo;
+    } catch (erro) {
+      error.value = "Erro ao atualizar técnico.";
+      console.error(erro);
+      throw erro;
+    } finally {
+      loading.value = false;
+    }
   }
 
   return {
     tecnicos,
-    setoresDisponiveis,
+    loading,
+    error,
     buscarTecnicos,
     buscarTecnicoPorId,
     adicionarTecnico,
     atualizarTecnico,
-    excluirTecnico,
   };
 });

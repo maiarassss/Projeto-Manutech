@@ -1,36 +1,117 @@
-<script setup>
-import { ref, onMounted } from "vue";
-import { useRoute, useRouter } from "vue-router";
-import { useMaquinasStore } from "@/stores/maquinaStore";
+<template>
+  <div class="pagina-cadastro">
+    <div class="card-cadastro">
+      <div class="cabecalho">
+        <div>
+          <h1>{{ editando ? "Editar máquina" : "Cadastrar máquina" }}</h1>
+          <p>Preencha os dados da máquina industrial.</p>
+        </div>
 
-const route = useRoute();
+        <button class="btn-voltar" @click="voltar">Voltar</button>
+      </div>
+
+      <form @submit.prevent="salvarMaquina" class="formulario">
+        <div class="campo">
+          <label for="codigoIdentificador">Código identificador</label>
+          <input
+            id="codigoIdentificador"
+            v-model="codigoIdentificador"
+            type="text"
+            placeholder="Ex: CORT-001"
+          />
+        </div>
+
+        <div class="campo">
+          <label for="modelo">Modelo</label>
+          <input
+            id="modelo"
+            v-model="modelo"
+            type="text"
+            placeholder="Ex: Cortadeira Hidráulica"
+          />
+        </div>
+
+        <div class="campo">
+          <label for="setor">Setor</label>
+          <select id="setor" v-model="idSetor">
+            <option :value="null">Selecione um setor</option>
+            <option
+              v-for="setor in setoresStore.setores"
+              :key="setor.idSetor"
+              :value="setor.idSetor"
+            >
+              {{ setor.nomeSetor }}
+            </option>
+          </select>
+
+          <span v-if="setoresStore.loading" class="mensagem-apoio">
+            Carregando setores...
+          </span>
+
+          <span v-if="setoresStore.error" class="mensagem-erro">
+            {{ setoresStore.error }}
+          </span>
+        </div>
+
+        <div class="campo-checkbox">
+          <input id="ativa" v-model="ativa" type="checkbox" />
+          <label for="ativa">Máquina ativa</label>
+        </div>
+
+        <p v-if="erroFormulario" class="erro-formulario">
+          {{ erroFormulario }}
+        </p>
+
+        <div class="acoes">
+          <button type="button" class="btn-cancelar" @click="voltar">
+            Cancelar
+          </button>
+
+          <button
+            type="submit"
+            class="btn-salvar"
+            :disabled="maquinaStore.loading"
+          >
+            {{
+              maquinaStore.loading
+                ? "Salvando..."
+                : editando
+                  ? "Salvar alterações"
+                  : "Cadastrar"
+            }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, onMounted } from "vue";
+import { useRouter, useRoute } from "vue-router";
+import { useMaquinasStore } from "@/stores/maquinaStore";
+import { useSetoresStore } from "@/stores/setorStore";
+
 const router = useRouter();
-const store = useMaquinasStore();
+const route = useRoute();
+
+const maquinaStore = useMaquinasStore();
+const setoresStore = useSetoresStore();
 
 const codigoIdentificador = ref("");
 const modelo = ref("");
 const idSetor = ref(null);
 const ativa = ref(true);
+const erroFormulario = ref("");
 
-const erro = ref("");
-const isEdit = ref(false);
-
-const setoresDisponiveis = [
-  { idSetor: 1, nomeSetor: "Corte" },
-  { idSetor: 2, nomeSetor: "Costura" },
-  { idSetor: 3, nomeSetor: "Montagem" },
-  { idSetor: 4, nomeSetor: "Acabamento" },
-];
+const editando = computed(() => !!route.params.id);
 
 onMounted(async () => {
-  await store.buscarMaquinas();
+  await setoresStore.buscarSetores();
+  await maquinaStore.buscarMaquinas();
 
-  const id = route.params.id;
-
-  if (id) {
-    isEdit.value = true;
-
-    const maquina = await store.buscarMaquinaPorId(id);
+  if (editando.value) {
+    const maquina = maquinaStore.buscarMaquinaPorId(Number(route.params.id));
 
     if (maquina) {
       codigoIdentificador.value = maquina.codigoIdentificador;
@@ -41,45 +122,30 @@ onMounted(async () => {
   }
 });
 
-async function salvar() {
-  erro.value = "";
+async function salvarMaquina() {
+  erroFormulario.value = "";
 
   if (!codigoIdentificador.value.trim()) {
-    erro.value = "O código identificador é obrigatório.";
+    erroFormulario.value = "Informe o código identificador da máquina.";
     return;
   }
 
   if (!modelo.value.trim()) {
-    erro.value = "O modelo da máquina é obrigatório.";
+    erroFormulario.value = "Informe o modelo da máquina.";
     return;
   }
 
   if (!idSetor.value) {
-    erro.value = "O setor é obrigatório.";
+    erroFormulario.value = "Selecione o setor da máquina.";
     return;
   }
 
-  const codigoDuplicado = store.maquinas.some((maquina) => {
-    const mesmoCodigo =
-      maquina.codigoIdentificador.toLowerCase() ===
-      codigoIdentificador.value.trim().toLowerCase();
-
-    const outraMaquina = maquina.idMaquina != route.params.id;
-
-    return mesmoCodigo && outraMaquina;
-  });
-
-  if (codigoDuplicado) {
-    erro.value = "Já existe uma máquina cadastrada com esse código.";
-    return;
-  }
-
-  const setorSelecionado = setoresDisponiveis.find(
-    (setor) => setor.idSetor == idSetor.value,
+  const setorSelecionado = setoresStore.setores.find(
+    (setor) => setor.idSetor === Number(idSetor.value),
   );
 
   if (!setorSelecionado) {
-    erro.value = "Setor selecionado não encontrado.";
+    erroFormulario.value = "Setor selecionado não encontrado.";
     return;
   }
 
@@ -91,128 +157,161 @@ async function salvar() {
     nomeSetor: setorSelecionado.nomeSetor,
   };
 
-  if (isEdit.value) {
-    await store.atualizarMaquina(route.params.id, maquina);
-  } else {
-    await store.adicionarMaquina(maquina);
-  }
+  try {
+    if (editando.value) {
+      await maquinaStore.atualizarMaquina(Number(route.params.id), maquina);
+    } else {
+      await maquinaStore.adicionarMaquina(maquina);
+    }
 
+    router.push("/maquinas");
+  } catch (erro) {
+    erroFormulario.value =
+      "Não foi possível salvar a máquina. Verifique os dados e tente novamente.";
+  }
+}
+
+function voltar() {
   router.push("/maquinas");
 }
 </script>
 
-<template>
-  <div class="container">
-    <h1>
-      {{ isEdit ? "Atualizar Máquina" : "Cadastro de Máquina" }}
-    </h1>
-
-    <form class="formulario">
-      <p v-if="erro" class="mensagem-erro">
-        {{ erro }}
-      </p>
-
-      <input
-        v-model="codigoIdentificador"
-        type="text"
-        placeholder="Código identificador"
-      />
-
-      <input v-model="modelo" type="text" placeholder="Modelo da máquina" />
-
-      <select v-model.number="idSetor">
-        <option :value="null">Selecione o setor</option>
-
-        <option
-          v-for="setor in setoresDisponiveis"
-          :key="setor.idSetor"
-          :value="setor.idSetor"
-        >
-          {{ setor.nomeSetor }}
-        </option>
-      </select>
-
-      <select v-model="ativa">
-        <option :value="true">Ativa</option>
-        <option :value="false">Inativa</option>
-      </select>
-
-      <button type="button" @click="salvar">
-        {{ isEdit ? "Atualizar" : "Salvar" }}
-      </button>
-
-      <button type="button" class="cancelar" @click="router.push('/maquinas')">
-        Cancelar
-      </button>
-    </form>
-  </div>
-</template>
-
 <style scoped>
-.container {
+.pagina-cadastro {
+  width: 100%;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding-top: 30px;
+  justify-content: center;
 }
 
-h1 {
-  color: #153b7a;
-  font-size: 2.6rem;
-  margin-bottom: 30px;
+.card-cadastro {
+  width: 100%;
+  max-width: 760px;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+}
+
+.cabecalho {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.cabecalho h1 {
+  font-size: 28px;
+  color: #1e3a8a;
+  margin-bottom: 6px;
+}
+
+.cabecalho p {
+  color: #64748b;
+  font-size: 15px;
 }
 
 .formulario {
   display: flex;
   flex-direction: column;
-  gap: 15px;
-  width: 450px;
+  gap: 18px;
 }
 
-input,
-select {
-  padding: 12px;
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.campo label,
+.campo-checkbox label {
+  font-weight: 600;
+  color: #334155;
+}
+
+.campo input,
+.campo select {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 15px;
+  outline: none;
+  background: #ffffff;
+}
+
+.campo input:focus,
+.campo select:focus {
+  border-color: #2563eb;
+}
+
+.campo-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.campo-checkbox input {
+  width: 18px;
+  height: 18px;
+}
+
+.mensagem-apoio {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.mensagem-erro,
+.erro-formulario {
+  font-size: 14px;
+  color: #dc2626;
+}
+
+.erro-formulario {
+  background: #fee2e2;
+  padding: 10px 12px;
   border-radius: 8px;
-  border: 1px solid #ccc;
-  font-size: 1rem;
 }
 
-button {
-  background: #173f82;
-  color: white;
+.acoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 10px;
+}
 
-  padding: 12px;
-
+.btn-voltar,
+.btn-cancelar,
+.btn-salvar {
   border: none;
-  border-radius: 8px;
-
-  font-weight: bold;
+  border-radius: 10px;
+  padding: 11px 18px;
+  font-weight: 600;
   cursor: pointer;
-
-  transition: 0.2s;
 }
 
-button:hover {
-  background: #123063;
+.btn-voltar,
+.btn-cancelar {
+  background: #e2e8f0;
+  color: #334155;
 }
 
-.cancelar {
-  background: #777;
+.btn-salvar {
+  background: #1e3a8a;
+  color: #ffffff;
 }
 
-.cancelar:hover {
-  background: #555;
+.btn-salvar:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
-.mensagem-erro {
-  background: #ffd9d9;
-  color: #b42318;
+.btn-voltar:hover,
+.btn-cancelar:hover {
+  background: #cbd5e1;
+}
 
-  padding: 12px;
-
-  border-radius: 8px;
-
-  font-weight: bold;
-  text-align: center;
+.btn-salvar:hover:not(:disabled) {
+  background: #1d4ed8;
 }
 </style>

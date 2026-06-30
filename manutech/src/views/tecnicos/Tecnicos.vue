@@ -1,331 +1,336 @@
-<script setup>
-import { Pencil, Trash2 } from "lucide-vue-next";
-import { useTecnicosStore } from "@/stores/tecnicoStore";
-import { onMounted, computed, ref } from "vue";
-
-const store = useTecnicosStore();
-
-const pesquisa = ref("");
-const mostrarConfirmacao = ref(false);
-const tecnicoParaExcluir = ref(null);
-
-onMounted(() => {
-  store.buscarTecnicos();
-});
-
-const tecnicos = computed(() => store.tecnicos);
-
-function nomesSetores(setores) {
-  return setores.map((setor) => setor.nomeSetor || setor.nome).join(", ");
-}
-
-const tecnicosFiltrados = computed(() => {
-  return tecnicos.value.filter((tecnico) => {
-    const termo = pesquisa.value.toLowerCase();
-
-    const setores = nomesSetores(tecnico.setoresAtendidos).toLowerCase();
-
-    return (
-      !pesquisa.value ||
-      tecnico.nome.toLowerCase().includes(termo) ||
-      tecnico.telefone.toLowerCase().includes(termo) ||
-      setores.includes(termo)
-    );
-  });
-});
-
-function confirmarExclusao(tecnico) {
-  tecnicoParaExcluir.value = tecnico;
-  mostrarConfirmacao.value = true;
-}
-
-async function excluirTecnico() {
-  await store.excluirTecnico(tecnicoParaExcluir.value.idTecnico);
-
-  mostrarConfirmacao.value = false;
-  tecnicoParaExcluir.value = null;
-}
-
-function cancelarExclusao() {
-  mostrarConfirmacao.value = false;
-  tecnicoParaExcluir.value = null;
-}
-
-function limparPesquisa() {
-  pesquisa.value = "";
-}
-</script>
-
 <template>
-  <div class="container">
-    <h1>Técnicos</h1>
+  <div class="pagina-tecnicos">
+    <div class="cabecalho-pagina">
+      <div>
+        <h1>Técnicos</h1>
+        <p>Gerencie os técnicos cadastrados no sistema.</p>
+      </div>
 
-    <div class="barra-filtros">
-      <input
-        v-model="pesquisa"
-        type="text"
-        placeholder="Pesquisar por nome, telefone ou setor..."
-      />
-
-      <button class="btn-limpar" @click="limparPesquisa">
-        Limpar pesquisa
+      <button class="btn-cadastrar" @click="cadastrarTecnico">
+        Cadastrar técnico
       </button>
     </div>
 
-    <div class="contador">
-      {{ tecnicosFiltrados.length }} técnicos encontrados
+    <div class="card-filtros">
+      <div class="campo-pesquisa">
+        <label for="pesquisa">Pesquisar</label>
+        <input
+          id="pesquisa"
+          v-model="pesquisa"
+          type="text"
+          placeholder="Buscar por nome, telefone ou setor..."
+        />
+      </div>
+
+      <div class="campo-filtro">
+        <label for="setor">Setor</label>
+        <select id="setor" v-model="filtroSetor">
+          <option value="">Todos os setores</option>
+          <option
+            v-for="setor in setoresDisponiveis"
+            :key="setor"
+            :value="setor"
+          >
+            {{ setor }}
+          </option>
+        </select>
+      </div>
     </div>
 
-    <table class="tabela-tecnicos">
-      <thead>
-        <tr>
-          <th>Nome</th>
-          <th>Telefone</th>
-          <th>Setores atendidos</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
+    <div class="resumo-lista">
+      <span>
+        Total de técnicos: <strong>{{ tecnicosFiltrados.length }}</strong>
+      </span>
 
-      <tbody>
-        <tr v-for="tecnico in tecnicosFiltrados" :key="tecnico.idTecnico">
-          <td>{{ tecnico.nome }}</td>
-          <td>{{ tecnico.telefone }}</td>
-          <td>{{ nomesSetores(tecnico.setoresAtendidos) }}</td>
+      <span v-if="tecnicoStore.loading" class="status-carregando">
+        Carregando técnicos...
+      </span>
 
-          <td class="acoes">
-            <router-link :to="`/tecnicos/editar/${tecnico.idTecnico}`">
-              <button class="editar" type="button">
-                <Pencil :size="18" />
+      <span v-if="tecnicoStore.error" class="status-erro">
+        {{ tecnicoStore.error }}
+      </span>
+    </div>
+
+    <div class="card-tabela">
+      <table v-if="tecnicosFiltrados.length > 0">
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Telefone</th>
+            <th>Setores atendidos</th>
+            <th class="coluna-acoes">Ações</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr v-for="tecnico in tecnicosFiltrados" :key="tecnico.idTecnico">
+            <td>{{ tecnico.nome }}</td>
+            <td>{{ tecnico.telefone }}</td>
+            <td>{{ listarSetores(tecnico) }}</td>
+            <td class="acoes">
+              <button
+                class="btn-editar"
+                @click="editarTecnico(tecnico.idTecnico)"
+              >
+                Editar
               </button>
-            </router-link>
+            </td>
+          </tr>
+        </tbody>
+      </table>
 
-            <button
-              class="excluir"
-              type="button"
-              @click="confirmarExclusao(tecnico)"
-            >
-              <Trash2 :size="18" />
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-
-    <router-link to="/tecnicos/cadastro">
-      <button class="btn-cadastro">+ Cadastrar Técnico</button>
-    </router-link>
-
-    <div v-if="mostrarConfirmacao" class="overlay">
-      <div class="modal">
-        <h2>Confirmar exclusão</h2>
-
-        <p>
-          Deseja realmente excluir o técnico
-          <strong>{{ tecnicoParaExcluir?.nome }}</strong
-          >?
-        </p>
-
-        <div class="botoes-modal">
-          <button class="cancelar" @click="cancelarExclusao">Cancelar</button>
-
-          <button class="confirmar" @click="excluirTecnico">Excluir</button>
-        </div>
-      </div>
+      <div v-else class="sem-registros">Nenhum técnico encontrado.</div>
     </div>
   </div>
 </template>
 
-<style scoped>
-.container {
-  width: 90%;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 30px 0;
+<script setup>
+import { computed, onMounted, ref } from "vue";
+import { useRouter } from "vue-router";
+import { useTecnicosStore } from "@/stores/tecnicoStore";
 
+const router = useRouter();
+const tecnicoStore = useTecnicosStore();
+
+const pesquisa = ref("");
+const filtroSetor = ref("");
+
+onMounted(async () => {
+  await tecnicoStore.buscarTecnicos();
+});
+
+const setoresDisponiveis = computed(() => {
+  const setores = tecnicoStore.tecnicos.flatMap((tecnico) =>
+    tecnico.setoresAtendidos.map((setor) => setor.nomeSetor),
+  );
+
+  return [...new Set(setores)].filter(Boolean);
+});
+
+const tecnicosFiltrados = computed(() => {
+  const termoPesquisa = pesquisa.value.toLowerCase().trim();
+
+  return tecnicoStore.tecnicos.filter((tecnico) => {
+    const nomesSetores = tecnico.setoresAtendidos
+      .map((setor) => setor.nomeSetor)
+      .join(" ")
+      .toLowerCase();
+
+    const correspondePesquisa =
+      !termoPesquisa ||
+      tecnico.nome?.toLowerCase().includes(termoPesquisa) ||
+      tecnico.telefone?.toLowerCase().includes(termoPesquisa) ||
+      nomesSetores.includes(termoPesquisa);
+
+    const correspondeSetor =
+      !filtroSetor.value ||
+      tecnico.setoresAtendidos.some(
+        (setor) => setor.nomeSetor === filtroSetor.value,
+      );
+
+    return correspondePesquisa && correspondeSetor;
+  });
+});
+
+function listarSetores(tecnico) {
+  if (!tecnico.setoresAtendidos || tecnico.setoresAtendidos.length === 0) {
+    return "Nenhum setor vinculado";
+  }
+
+  return tecnico.setoresAtendidos.map((setor) => setor.nomeSetor).join(", ");
+}
+
+function cadastrarTecnico() {
+  router.push("/tecnicos/cadastro");
+}
+
+function editarTecnico(id) {
+  router.push(`/tecnicos/editar/${id}`);
+}
+</script>
+
+<style scoped>
+.pagina-tecnicos {
+  width: 100%;
+}
+
+.cabecalho-pagina {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.cabecalho-pagina h1 {
+  font-size: 30px;
+  color: #1e3a8a;
+  margin-bottom: 6px;
+}
+
+.cabecalho-pagina p {
+  color: #64748b;
+  font-size: 15px;
+}
+
+.btn-cadastrar {
+  border: none;
+  background: #1e3a8a;
+  color: #ffffff;
+  padding: 12px 18px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-cadastrar:hover {
+  background: #1d4ed8;
+}
+
+.card-filtros {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 18px;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+}
+
+.campo-pesquisa,
+.campo-filtro {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  gap: 8px;
 }
 
-h1 {
-  color: #153b7a;
-  font-size: 3rem;
-  margin-bottom: 30px;
+.campo-pesquisa label,
+.campo-filtro label {
+  font-weight: 600;
+  color: #334155;
+  font-size: 14px;
 }
 
-.barra-filtros {
+.campo-pesquisa input,
+.campo-filtro select {
   width: 100%;
+  padding: 11px 13px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 14px;
+  outline: none;
+  background: #ffffff;
+}
 
+.campo-pesquisa input:focus,
+.campo-filtro select:focus {
+  border-color: #2563eb;
+}
+
+.resumo-lista {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
-  gap: 15px;
-
-  margin-bottom: 25px;
-
-  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+  color: #475569;
+  font-size: 14px;
 }
 
-.barra-filtros input {
-  padding: 12px;
-  min-width: 350px;
-
-  border: 1px solid #d8d8d8;
-  border-radius: 8px;
-
-  font-size: 1rem;
+.status-carregando {
+  color: #2563eb;
+  font-weight: 600;
 }
 
-.btn-limpar {
-  background: #173f82;
-  color: white;
-
-  padding: 12px 24px;
-
-  border: none;
-  border-radius: 8px;
-
-  cursor: pointer;
-
-  transition: 0.2s;
+.status-erro {
+  color: #dc2626;
+  font-weight: 600;
 }
 
-.btn-limpar:hover {
-  background: #123063;
+.card-tabela {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+  overflow-x: auto;
 }
 
-.contador {
-  width: 100%;
-  margin-bottom: 15px;
-
-  color: #555;
-  font-size: 1rem;
-  font-weight: bold;
-}
-
-.tabela-tecnicos {
+table {
   width: 100%;
   border-collapse: collapse;
-  background: #fff;
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
 }
 
-.tabela-tecnicos thead {
-  background: #173f82;
-  color: white;
+thead {
+  background: #f1f5f9;
 }
 
-.tabela-tecnicos th,
-.tabela-tecnicos td {
-  padding: 18px;
+th,
+td {
+  padding: 14px 12px;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+  color: #334155;
+  font-size: 14px;
+}
+
+th {
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.coluna-acoes {
   text-align: center;
-}
-
-.tabela-tecnicos tbody tr {
-  border-bottom: 1px solid #ececec;
-}
-
-.tabela-tecnicos tbody tr:hover {
-  background: #f7f9fc;
 }
 
 .acoes {
   display: flex;
   justify-content: center;
-  gap: 15px;
-}
-
-button {
-  border: none;
-  background: transparent;
-  cursor: pointer;
-}
-
-.editar {
-  color: #173f82;
-}
-
-.excluir {
-  color: #d62828;
-}
-
-.btn-cadastro {
-  margin-top: 35px;
-  width: 280px;
-  height: 60px;
-
-  background: #173f82;
-  color: white;
-
-  border-radius: 8px;
-
-  font-size: 1.1rem;
-  font-weight: bold;
-
-  transition: 0.2s;
-}
-
-.btn-cadastro:hover {
-  background: #123063;
-}
-
-.overlay {
-  position: fixed;
-  inset: 0;
-
-  background: rgba(0, 0, 0, 0.45);
-
-  display: flex;
-  justify-content: center;
   align-items: center;
+  gap: 8px;
 }
 
-.modal {
-  background: white;
-
-  width: 400px;
-
-  padding: 30px;
-
-  border-radius: 12px;
-
-  text-align: center;
-
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
-}
-
-.modal h2 {
-  color: #173f82;
-}
-
-.botoes-modal {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-
-  margin-top: 25px;
-}
-
-.cancelar,
-.confirmar {
-  padding: 12px 25px;
-
+.btn-editar {
+  border: none;
+  padding: 8px 11px;
   border-radius: 8px;
-
-  font-weight: bold;
-
+  font-weight: 600;
   cursor: pointer;
+  background: #dbeafe;
+  color: #1d4ed8;
 }
 
-.cancelar {
-  background: #ddd;
-  color: #333;
+.btn-editar:hover {
+  background: #bfdbfe;
 }
 
-.confirmar {
-  background: #d62828;
-  color: white;
+.sem-registros {
+  padding: 28px;
+  text-align: center;
+  color: #64748b;
+  font-size: 15px;
+}
+
+@media (max-width: 900px) {
+  .cabecalho-pagina {
+    flex-direction: column;
+  }
+
+  .card-filtros {
+    grid-template-columns: 1fr;
+  }
+
+  .btn-cadastrar {
+    width: 100%;
+  }
+
+  .resumo-lista {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .acoes {
+    flex-direction: column;
+  }
 }
 </style>

@@ -1,99 +1,164 @@
 import { ref } from "vue";
 import { defineStore } from "pinia";
+import { api } from "@/services/api";
 
 export const useOrdensStore = defineStore("ordens", () => {
-  const ordens = ref([
-    {
-      idOrdem: 1,
-      titulo: "Falha na cortadeira",
-      descricao: "Máquina travando durante o processo de corte do couro.",
-      prioridade: "ALTA",
-      status: "ANDAMENTO",
+  const ordens = ref([]);
+  const loading = ref(false);
+  const error = ref(null);
 
-      idMaquina: 1,
-      codigoIdentificador: "CORT-001",
-      modelo: "Cortadeira Hidráulica",
-      nomeSetor: "Corte",
+  function normalizarOrdem(ordem) {
+    return {
+      idOrdem: ordem.idOrdem,
+      titulo: ordem.titulo || "",
+      descricao: ordem.descricao || "",
+      prioridade: ordem.prioridade || "BAIXA",
+      status: ordem.status || "ABERTA",
 
-      idTecnico: 1,
-      nomeTecnico: "João Silva",
-    },
-    {
-      idOrdem: 2,
-      titulo: "Revisão da máquina de costura",
-      descricao: "Revisão preventiva na máquina de costura industrial.",
-      prioridade: "MEDIA",
-      status: "ANDAMENTO",
+      idMaquina:
+        ordem.idMaquina ||
+        ordem.maquina?.idMaquina ||
+        ordem.maquinaResponseDTO?.idMaquina ||
+        null,
 
-      idMaquina: 2,
-      codigoIdentificador: "COST-002",
-      modelo: "Máquina de Costura Industrial",
-      nomeSetor: "Costura",
+      codigoIdentificador:
+        ordem.codigoIdentificador ||
+        ordem.maquina?.codigoIdentificador ||
+        ordem.maquinaResponseDTO?.codigoIdentificador ||
+        "",
 
-      idTecnico: 2,
-      nomeTecnico: "Maria Oliveira",
-    },
-    {
-      idOrdem: 3,
-      titulo: "Lixadeira parada",
-      descricao: "Equipamento não está ligando corretamente.",
-      prioridade: "CRITICA",
-      status: "CANCELADA",
+      modelo:
+        ordem.modelo ||
+        ordem.maquina?.modelo ||
+        ordem.maquinaResponseDTO?.modelo ||
+        "",
 
-      idMaquina: 6,
-      codigoIdentificador: "LIXA-006",
-      modelo: "Lixadeira de Couro",
-      nomeSetor: "Acabamento",
+      nomeSetor:
+        ordem.nomeSetor ||
+        ordem.maquina?.nomeSetor ||
+        ordem.maquinaResponseDTO?.nomeSetor ||
+        ordem.maquina?.setor?.nomeSetor ||
+        ordem.maquinaResponseDTO?.setor?.nomeSetor ||
+        "",
 
-      idTecnico: 3,
-      nomeTecnico: "Pedro Santos",
-    },
-  ]);
+      idTecnico:
+        ordem.idTecnico ||
+        ordem.tecnico?.idTecnico ||
+        ordem.tecnicoResponseDTO?.idTecnico ||
+        null,
 
-  async function buscarOrdens() {
-    return ordens.value;
+      nomeTecnico:
+        ordem.nomeTecnico ||
+        ordem.tecnico?.nome ||
+        ordem.tecnicoResponseDTO?.nome ||
+        "Não atribuído",
+    };
   }
 
-  async function buscarOrdemPorId(id) {
-    return ordens.value.find((ordem) => ordem.idOrdem == id);
+  async function buscarOrdens() {
+    loading.value = true;
+    error.value = null;
+
+    try {
+      const resposta = await api.get("/ordens");
+      ordens.value = resposta.data.map(normalizarOrdem);
+      return ordens.value;
+    } catch (erro) {
+      error.value = "Erro ao buscar ordens.";
+      console.error(erro);
+      return [];
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  function buscarOrdemPorId(id) {
+    return ordens.value.find((ordem) => ordem.idOrdem === id);
   }
 
   async function adicionarOrdem(ordem) {
-    const novaOrdem = {
-      idOrdem: Date.now(),
-      ...ordem,
+    loading.value = true;
+    error.value = null;
+
+    const ordemRequest = {
+      titulo: ordem.titulo,
+      descricao: ordem.descricao,
+      prioridade: ordem.prioridade,
+      status: ordem.status,
+      idMaquina: ordem.idMaquina,
+      idTecnico: ordem.idTecnico || null,
     };
 
-    ordens.value.push(novaOrdem);
+    try {
+      const resposta = await api.post("/ordens", ordemRequest);
+      const novaOrdem = normalizarOrdem(resposta.data);
 
-    return novaOrdem;
+      ordens.value.push(novaOrdem);
+      return novaOrdem;
+    } catch (erro) {
+      error.value = "Erro ao cadastrar ordem.";
+      console.error(erro);
+      throw erro;
+    } finally {
+      loading.value = false;
+    }
   }
 
-  async function atualizarOrdem(id, ordem) {
-    const index = ordens.value.findIndex((o) => o.idOrdem == id);
+  async function atualizarOrdem(id, ordemAtualizada) {
+    loading.value = true;
+    error.value = null;
 
-    if (index !== -1) {
-      ordens.value[index] = {
-        idOrdem: Number(id),
-        ...ordem,
-      };
+    const ordemRequest = {
+      titulo: ordemAtualizada.titulo,
+      descricao: ordemAtualizada.descricao,
+      prioridade: ordemAtualizada.prioridade,
+      status: ordemAtualizada.status,
+      idMaquina: ordemAtualizada.idMaquina,
+      idTecnico: ordemAtualizada.idTecnico || null,
+    };
+
+    try {
+      const resposta = await api.put(`/ordens/${id}`, ordemRequest);
+      const ordemSalva = normalizarOrdem(resposta.data);
+
+      const index = ordens.value.findIndex((ordem) => ordem.idOrdem === id);
+
+      if (index !== -1) {
+        ordens.value[index] = ordemSalva;
+      }
+
+      return ordemSalva;
+    } catch (erro) {
+      error.value = "Erro ao atualizar ordem.";
+      console.error(erro);
+      throw erro;
+    } finally {
+      loading.value = false;
     }
-
-    return ordens.value[index];
   }
 
   async function cancelarOrdem(id) {
-    const ordem = ordens.value.find((o) => o.idOrdem == id);
+    const ordemAtual = ordens.value.find((ordem) => ordem.idOrdem === id);
 
-    if (ordem) {
-      ordem.status = "CANCELADA";
+    if (!ordemAtual) {
+      error.value = "Ordem não encontrada.";
+      return;
     }
 
-    return ordem;
+    return atualizarOrdem(id, {
+      titulo: ordemAtual.titulo,
+      descricao: ordemAtual.descricao,
+      prioridade: ordemAtual.prioridade,
+      status: "CANCELADA",
+      idMaquina: ordemAtual.idMaquina,
+      idTecnico: ordemAtual.idTecnico,
+    });
   }
 
   return {
     ordens,
+    loading,
+    error,
     buscarOrdens,
     buscarOrdemPorId,
     adicionarOrdem,

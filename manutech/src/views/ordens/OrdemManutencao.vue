@@ -1,383 +1,494 @@
-<script setup>
-import { Pencil, XCircle, Eye } from "lucide-vue-next";
-import { useOrdensStore } from "@/stores/ordemStore";
-import { onMounted, computed, ref } from "vue";
-
-const store = useOrdensStore();
-
-const pesquisa = ref("");
-const statusSelecionado = ref("");
-const prioridadeSelecionada = ref("");
-
-const mostrarConfirmacao = ref(false);
-const ordemParaCancelar = ref(null);
-
-const mostrarDetalhes = ref(false);
-const ordemParaDetalhes = ref(null);
-
-onMounted(() => {
-  store.buscarOrdens();
-});
-
-const ordens = computed(() => store.ordens);
-
-const ordensFiltradas = computed(() => {
-  return ordens.value.filter((ordem) => {
-    const termo = pesquisa.value.toLowerCase();
-
-    const atendePesquisa =
-      !pesquisa.value ||
-      ordem.titulo.toLowerCase().includes(termo) ||
-      ordem.descricao.toLowerCase().includes(termo) ||
-      ordem.modelo.toLowerCase().includes(termo) ||
-      ordem.codigoIdentificador.toLowerCase().includes(termo) ||
-      ordem.nomeSetor.toLowerCase().includes(termo) ||
-      ordem.nomeTecnico.toLowerCase().includes(termo);
-
-    const atendeStatus =
-      !statusSelecionado.value || ordem.status === statusSelecionado.value;
-
-    const atendePrioridade =
-      !prioridadeSelecionada.value ||
-      ordem.prioridade === prioridadeSelecionada.value;
-
-    return atendePesquisa && atendeStatus && atendePrioridade;
-  });
-});
-
-function abrirDetalhes(ordem) {
-  ordemParaDetalhes.value = ordem;
-  mostrarDetalhes.value = true;
-}
-
-function fecharDetalhes() {
-  mostrarDetalhes.value = false;
-  ordemParaDetalhes.value = null;
-}
-
-function confirmarCancelamento(ordem) {
-  ordemParaCancelar.value = ordem;
-  mostrarConfirmacao.value = true;
-}
-
-async function cancelarOrdem() {
-  await store.cancelarOrdem(ordemParaCancelar.value.idOrdem);
-
-  mostrarConfirmacao.value = false;
-  ordemParaCancelar.value = null;
-}
-
-function fecharConfirmacao() {
-  mostrarConfirmacao.value = false;
-  ordemParaCancelar.value = null;
-}
-
-function limparFiltros() {
-  pesquisa.value = "";
-  statusSelecionado.value = "";
-  prioridadeSelecionada.value = "";
-}
-</script>
-
 <template>
-  <div class="container">
-    <h1>Ordens de Manutenção</h1>
+  <div class="pagina-ordens">
+    <div class="cabecalho-pagina">
+      <div>
+        <h1>Ordens de manutenção</h1>
+        <p>Gerencie as ordens de serviço cadastradas no sistema.</p>
+      </div>
 
-    <div class="barra-filtros">
-      <input
-        v-model="pesquisa"
-        type="text"
-        placeholder="Pesquisar por título, máquina, setor ou técnico..."
-      />
-
-      <select v-model="statusSelecionado">
-        <option value="">Todos os status</option>
-        <option value="ANDAMENTO">Em andamento</option>
-        <option value="CONCLUIDA">Concluída</option>
-        <option value="CANCELADA">Cancelada</option>
-      </select>
-
-      <select v-model="prioridadeSelecionada">
-        <option value="">Todas as prioridades</option>
-        <option value="BAIXA">Baixa</option>
-        <option value="MEDIA">Média</option>
-        <option value="ALTA">Alta</option>
-        <option value="CRITICA">Crítica</option>
-      </select>
-
-      <button class="btn-limpar" @click="limparFiltros">Limpar filtros</button>
+      <button class="btn-cadastrar" @click="cadastrarOrdem">
+        Cadastrar ordem
+      </button>
     </div>
 
-    <div class="contador">{{ ordensFiltradas.length }} ordens encontradas</div>
+    <div class="card-filtros">
+      <div class="campo-pesquisa">
+        <label for="pesquisa">Pesquisar</label>
+        <input
+          id="pesquisa"
+          v-model="pesquisa"
+          type="text"
+          placeholder="Buscar por título, máquina, setor ou técnico..."
+        />
+      </div>
 
-    <table class="tabela-ordens">
-      <thead>
-        <tr>
-          <th>Título</th>
-          <th>Máquina</th>
-          <th>Setor</th>
-          <th>Técnico</th>
-          <th>Prioridade</th>
-          <th>Status</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
+      <div class="campo-filtro">
+        <label for="status">Status</label>
+        <select id="status" v-model="filtroStatus">
+          <option value="">Todos os status</option>
+          <option value="ABERTA">Aberta</option>
+          <option value="ANDAMENTO">Em andamento</option>
+          <option value="CONCLUIDA">Concluída</option>
+          <option value="CANCELADA">Cancelada</option>
+        </select>
+      </div>
 
-      <tbody>
-        <tr v-for="ordem in ordensFiltradas" :key="ordem.idOrdem">
-          <td>{{ ordem.titulo }}</td>
+      <div class="campo-filtro">
+        <label for="prioridade">Prioridade</label>
+        <select id="prioridade" v-model="filtroPrioridade">
+          <option value="">Todas as prioridades</option>
+          <option value="BAIXA">Baixa</option>
+          <option value="MEDIA">Média</option>
+          <option value="ALTA">Alta</option>
+          <option value="CRITICA">Crítica</option>
+        </select>
+      </div>
+    </div>
 
-          <td>{{ ordem.codigoIdentificador }} - {{ ordem.modelo }}</td>
+    <div class="resumo-lista">
+      <span>
+        Total de ordens: <strong>{{ ordensFiltradas.length }}</strong>
+      </span>
 
-          <td>{{ ordem.nomeSetor }}</td>
+      <span v-if="ordemStore.loading" class="status-carregando">
+        Carregando ordens...
+      </span>
 
-          <td>{{ ordem.nomeTecnico }}</td>
+      <span v-if="ordemStore.error" class="status-erro">
+        {{ ordemStore.error }}
+      </span>
+    </div>
 
-          <td>
-            <span class="prioridade" :class="ordem.prioridade.toLowerCase()">
-              {{ ordem.prioridade }}
-            </span>
-          </td>
+    <div class="card-tabela">
+      <table v-if="ordensFiltradas.length > 0">
+        <thead>
+          <tr>
+            <th>Título</th>
+            <th>Máquina</th>
+            <th>Setor</th>
+            <th>Técnico</th>
+            <th>Prioridade</th>
+            <th>Status</th>
+            <th class="coluna-acoes">Ações</th>
+          </tr>
+        </thead>
 
-          <td>
-            <span class="status" :class="ordem.status.toLowerCase()">
-              {{ ordem.status }}
-            </span>
-          </td>
+        <tbody>
+          <tr v-for="ordem in ordensFiltradas" :key="ordem.idOrdem">
+            <td>{{ ordem.titulo }}</td>
 
-          <td class="acoes">
-            <button
-              class="detalhes"
-              type="button"
-              @click="abrirDetalhes(ordem)"
-            >
-              <Eye :size="18" />
-            </button>
+            <td>
+              {{ formatarMaquina(ordem) }}
+            </td>
 
-            <router-link :to="`/ordens/editar/${ordem.idOrdem}`">
-              <button class="editar" type="button">
-                <Pencil :size="18" />
+            <td>{{ ordem.nomeSetor || "Sem setor" }}</td>
+
+            <td>{{ ordem.nomeTecnico || "Não atribuído" }}</td>
+
+            <td>
+              <span
+                class="badge-prioridade"
+                :class="classePrioridade(ordem.prioridade)"
+              >
+                {{ formatarPrioridade(ordem.prioridade) }}
+              </span>
+            </td>
+
+            <td>
+              <span class="badge-status" :class="classeStatus(ordem.status)">
+                {{ formatarStatus(ordem.status) }}
+              </span>
+            </td>
+
+            <td class="acoes">
+              <button class="btn-detalhes" @click="abrirDetalhes(ordem)">
+                Detalhes
               </button>
-            </router-link>
 
-            <button
-              class="cancelar-ordem"
-              type="button"
-              @click="confirmarCancelamento(ordem)"
-              :disabled="ordem.status === 'CANCELADA'"
-            >
-              <XCircle :size="18" />
-            </button>
-          </td>
-        </tr>
-        <tr v-if="ordensFiltradas.length === 0">
-          <td colspan="7" class="sem-resultados">Nenhuma ordem encontrada.</td>
-        </tr>
-      </tbody>
-    </table>
+              <button class="btn-editar" @click="editarOrdem(ordem.idOrdem)">
+                Editar
+              </button>
 
-    <router-link to="/ordens/cadastro">
-      <button class="btn-cadastro">+ Cadastrar Ordem</button>
-    </router-link>
+              <button
+                v-if="ordem.status !== 'CANCELADA'"
+                class="btn-cancelar-ordem"
+                @click="cancelarOrdem(ordem.idOrdem)"
+              >
+                Cancelar
+              </button>
 
-    <div v-if="mostrarDetalhes" class="overlay">
-      <div class="modal detalhes-modal">
-        <h2>Detalhes da Ordem</h2>
+              <span v-else class="texto-cancelada"> Já cancelada </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
 
-        <div class="conteudo-detalhes">
-          <p>
-            <strong>Título:</strong>
-            {{ ordemParaDetalhes?.titulo }}
-          </p>
+      <div v-else class="sem-registros">Nenhuma ordem encontrada.</div>
+    </div>
 
+    <div v-if="ordemSelecionada" class="modal-fundo">
+      <div class="modal-card">
+        <div class="modal-cabecalho">
+          <div>
+            <h2>{{ ordemSelecionada.titulo }}</h2>
+            <p>Detalhes da ordem de manutenção</p>
+          </div>
+
+          <button class="btn-fechar" @click="fecharDetalhes">Fechar</button>
+        </div>
+
+        <div class="modal-conteudo">
           <p>
             <strong>Descrição:</strong>
-            {{ ordemParaDetalhes?.descricao }}
+            {{ ordemSelecionada.descricao || "Sem descrição." }}
           </p>
 
           <p>
             <strong>Máquina:</strong>
-            {{ ordemParaDetalhes?.codigoIdentificador }} -
-            {{ ordemParaDetalhes?.modelo }}
+            {{ formatarMaquina(ordemSelecionada) }}
           </p>
 
           <p>
             <strong>Setor:</strong>
-            {{ ordemParaDetalhes?.nomeSetor }}
+            {{ ordemSelecionada.nomeSetor || "Sem setor" }}
           </p>
 
           <p>
-            <strong>Técnico responsável:</strong>
-            {{ ordemParaDetalhes?.nomeTecnico }}
+            <strong>Técnico:</strong>
+            {{ ordemSelecionada.nomeTecnico || "Não atribuído" }}
           </p>
 
           <p>
             <strong>Prioridade:</strong>
-            {{ ordemParaDetalhes?.prioridade }}
+            {{ formatarPrioridade(ordemSelecionada.prioridade) }}
           </p>
 
           <p>
             <strong>Status:</strong>
-            {{ ordemParaDetalhes?.status }}
+            {{ formatarStatus(ordemSelecionada.status) }}
           </p>
-        </div>
-
-        <div class="botoes-modal">
-          <button class="cancelar" @click="fecharDetalhes">Fechar</button>
-        </div>
-      </div>
-    </div>
-
-    <div v-if="mostrarConfirmacao" class="overlay">
-      <div class="modal">
-        <h2>Cancelar ordem</h2>
-
-        <p>
-          Deseja realmente cancelar a ordem
-          <strong>{{ ordemParaCancelar?.titulo }}</strong
-          >?
-        </p>
-
-        <div class="botoes-modal">
-          <button class="cancelar" @click="fecharConfirmacao">Voltar</button>
-
-          <button class="confirmar" @click="cancelarOrdem">
-            Cancelar ordem
-          </button>
         </div>
       </div>
     </div>
   </div>
 </template>
 
-<style scoped>
-.container {
-  width: 95%;
-  max-width: 1300px;
-  margin: 0 auto;
-  padding: 30px 0;
+<script setup>
+import { computed, onMounted, ref } from "vue";
+import { useRouter } from "vue-router";
+import { useOrdensStore } from "@/stores/ordemStore";
 
+const router = useRouter();
+const ordemStore = useOrdensStore();
+
+const pesquisa = ref("");
+const filtroStatus = ref("");
+const filtroPrioridade = ref("");
+const ordemSelecionada = ref(null);
+
+onMounted(async () => {
+  await ordemStore.buscarOrdens();
+});
+
+const ordensFiltradas = computed(() => {
+  const termoPesquisa = pesquisa.value.toLowerCase().trim();
+
+  return ordemStore.ordens.filter((ordem) => {
+    const maquina = formatarMaquina(ordem).toLowerCase();
+
+    const correspondePesquisa =
+      !termoPesquisa ||
+      ordem.titulo?.toLowerCase().includes(termoPesquisa) ||
+      ordem.descricao?.toLowerCase().includes(termoPesquisa) ||
+      maquina.includes(termoPesquisa) ||
+      ordem.nomeSetor?.toLowerCase().includes(termoPesquisa) ||
+      ordem.nomeTecnico?.toLowerCase().includes(termoPesquisa);
+
+    const correspondeStatus =
+      !filtroStatus.value || ordem.status === filtroStatus.value;
+
+    const correspondePrioridade =
+      !filtroPrioridade.value || ordem.prioridade === filtroPrioridade.value;
+
+    return correspondePesquisa && correspondeStatus && correspondePrioridade;
+  });
+});
+
+function cadastrarOrdem() {
+  router.push("/ordens/cadastro");
+}
+
+function editarOrdem(id) {
+  router.push(`/ordens/editar/${id}`);
+}
+
+async function cancelarOrdem(id) {
+  const confirmar = confirm("Deseja realmente cancelar esta ordem?");
+
+  if (!confirmar) {
+    return;
+  }
+
+  try {
+    await ordemStore.cancelarOrdem(id);
+    await ordemStore.buscarOrdens();
+  } catch (erro) {
+    alert("Não foi possível cancelar a ordem.");
+  }
+}
+
+function abrirDetalhes(ordem) {
+  ordemSelecionada.value = ordem;
+}
+
+function fecharDetalhes() {
+  ordemSelecionada.value = null;
+}
+
+function formatarMaquina(ordem) {
+  const codigo = ordem.codigoIdentificador || "";
+  const modelo = ordem.modelo || "";
+
+  if (codigo && modelo) {
+    return `${codigo} - ${modelo}`;
+  }
+
+  if (codigo) {
+    return codigo;
+  }
+
+  if (modelo) {
+    return modelo;
+  }
+
+  return "Máquina não informada";
+}
+
+function formatarStatus(status) {
+  const statusMap = {
+    ABERTA: "Aberta",
+    ANDAMENTO: "Em andamento",
+    CONCLUIDA: "Concluída",
+    CANCELADA: "Cancelada",
+  };
+
+  return statusMap[status] || status;
+}
+
+function formatarPrioridade(prioridade) {
+  const prioridadeMap = {
+    BAIXA: "Baixa",
+    MEDIA: "Média",
+    ALTA: "Alta",
+    CRITICA: "Crítica",
+  };
+
+  return prioridadeMap[prioridade] || prioridade;
+}
+
+function classeStatus(status) {
+  return {
+    aberta: status === "ABERTA",
+    andamento: status === "ANDAMENTO",
+    concluida: status === "CONCLUIDA",
+    cancelada: status === "CANCELADA",
+  };
+}
+
+function classePrioridade(prioridade) {
+  return {
+    baixa: prioridade === "BAIXA",
+    media: prioridade === "MEDIA",
+    alta: prioridade === "ALTA",
+    critica: prioridade === "CRITICA",
+  };
+}
+</script>
+
+<style scoped>
+.pagina-ordens {
+  width: 100%;
+}
+
+.cabecalho-pagina {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.cabecalho-pagina h1 {
+  font-size: 30px;
+  color: #1e3a8a;
+  margin-bottom: 6px;
+}
+
+.cabecalho-pagina p {
+  color: #64748b;
+  font-size: 15px;
+}
+
+.btn-cadastrar {
+  border: none;
+  background: #1e3a8a;
+  color: #ffffff;
+  padding: 12px 18px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-cadastrar:hover {
+  background: #1d4ed8;
+}
+
+.card-filtros {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 18px;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 16px;
+}
+
+.campo-pesquisa,
+.campo-filtro {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  gap: 8px;
 }
 
-h1 {
-  color: #153b7a;
-  font-size: 3rem;
-  margin-bottom: 30px;
+.campo-pesquisa label,
+.campo-filtro label {
+  font-weight: 600;
+  color: #334155;
+  font-size: 14px;
 }
 
-.barra-filtros {
+.campo-pesquisa input,
+.campo-filtro select {
   width: 100%;
+  padding: 11px 13px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 14px;
+  outline: none;
+  background: #ffffff;
+}
 
+.campo-pesquisa input:focus,
+.campo-filtro select:focus {
+  border-color: #2563eb;
+}
+
+.resumo-lista {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
-  gap: 15px;
-
-  margin-bottom: 25px;
-
-  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+  color: #475569;
+  font-size: 14px;
 }
 
-.barra-filtros input,
-.barra-filtros select {
-  padding: 12px;
-
-  min-width: 220px;
-
-  border: 1px solid #d8d8d8;
-  border-radius: 8px;
-
-  font-size: 1rem;
+.status-carregando {
+  color: #2563eb;
+  font-weight: 600;
 }
 
-.barra-filtros input {
-  min-width: 350px;
+.status-erro {
+  color: #dc2626;
+  font-weight: 600;
 }
 
-.btn-limpar {
-  background: #173f82;
-  color: white;
-
-  padding: 12px 24px;
-
-  border: none;
-  border-radius: 8px;
-
-  cursor: pointer;
-
-  transition: 0.2s;
+.card-tabela {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+  overflow-x: auto;
 }
 
-.btn-limpar:hover {
-  background: #123063;
-}
-
-.contador {
-  width: 100%;
-  margin-bottom: 15px;
-
-  color: #555;
-  font-size: 1rem;
-  font-weight: bold;
-}
-
-.tabela-ordens {
+table {
   width: 100%;
   border-collapse: collapse;
-  background: #fff;
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
 }
 
-.tabela-ordens thead {
-  background: #173f82;
-  color: white;
+thead {
+  background: #f1f5f9;
 }
 
-.tabela-ordens th,
-.tabela-ordens td {
-  padding: 16px;
+th,
+td {
+  padding: 14px 12px;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+  color: #334155;
+  font-size: 14px;
+}
+
+th {
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.coluna-acoes {
   text-align: center;
 }
 
-.tabela-ordens tbody tr {
-  border-bottom: 1px solid #ececec;
+.acoes {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
-.tabela-ordens tbody tr:hover {
-  background: #f7f9fc;
+.btn-detalhes,
+.btn-editar,
+.btn-cancelar-ordem {
+  border: none;
+  padding: 8px 11px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
 }
 
-.prioridade,
-.status {
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: bold;
+.btn-detalhes,
+.btn-editar {
+  background: #dbeafe;
+  color: #1d4ed8;
 }
 
-.baixa {
-  background: #d7f6de;
-  color: #1d7d38;
+.btn-cancelar-ordem {
+  background: #fee2e2;
+  color: #b91c1c;
 }
 
-.media {
-  background: #fff1c2;
-  color: #8a6d00;
+.btn-detalhes:hover,
+.btn-editar:hover {
+  background: #bfdbfe;
 }
 
-.alta {
-  background: #ffd9b3;
-  color: #b85c00;
+.btn-cancelar-ordem:hover {
+  background: #fecaca;
 }
 
-.critica {
-  background: #ffd9d9;
-  color: #b42318;
+.badge-status,
+.badge-prioridade {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.aberta {
+  background: #f1f5f9;
+  color: #334155;
 }
 
 .andamento {
@@ -386,148 +497,129 @@ h1 {
 }
 
 .concluida {
-  background: #d7f6de;
-  color: #1d7d38;
+  background: #dcfce7;
+  color: #166534;
 }
 
 .cancelada {
-  background: #e5e5e5;
-  color: #555;
+  background: #e5e7eb;
+  color: #4b5563;
 }
 
-.acoes {
-  display: flex;
-  justify-content: center;
-  gap: 15px;
+.baixa {
+  background: #dcfce7;
+  color: #166534;
 }
 
-button {
-  border: none;
-  background: transparent;
-  cursor: pointer;
+.media {
+  background: #fef3c7;
+  color: #92400e;
 }
 
-.detalhes {
-  color: #173f82;
+.alta {
+  background: #ffedd5;
+  color: #c2410c;
 }
 
-.editar {
-  color: #173f82;
+.critica {
+  background: #fee2e2;
+  color: #b91c1c;
 }
 
-.cancelar-ordem {
-  color: #d62828;
+.texto-cancelada {
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 600;
 }
 
-.cancelar-ordem:disabled {
-  color: #aaa;
-  cursor: not-allowed;
+.sem-registros {
+  padding: 28px;
+  text-align: center;
+  color: #64748b;
+  font-size: 15px;
 }
 
-.btn-cadastro {
-  margin-top: 35px;
-  width: 280px;
-  height: 60px;
-
-  background: #173f82;
-  color: white;
-
-  border-radius: 8px;
-
-  font-size: 1.1rem;
-  font-weight: bold;
-
-  transition: 0.2s;
-}
-
-.btn-cadastro:hover {
-  background: #123063;
-}
-
-.overlay {
+.modal-fundo {
   position: fixed;
   inset: 0;
-
-  background: rgba(0, 0, 0, 0.45);
-
+  background: rgba(15, 23, 42, 0.45);
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: 24px;
+  z-index: 20;
 }
 
-.modal {
-  background: white;
-
-  width: 420px;
-
-  padding: 30px;
-
-  border-radius: 12px;
-
-  text-align: center;
-
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+.modal-card {
+  width: 100%;
+  max-width: 620px;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.2);
 }
 
-.modal h2 {
-  color: #173f82;
+.modal-cabecalho {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 20px;
 }
 
-.detalhes-modal {
-  text-align: left;
+.modal-cabecalho h2 {
+  color: #1e3a8a;
+  font-size: 24px;
+  margin-bottom: 4px;
 }
 
-.detalhes-modal h2 {
-  text-align: center;
+.modal-cabecalho p {
+  color: #64748b;
+  font-size: 14px;
 }
 
-.conteudo-detalhes {
+.modal-conteudo {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-
-  margin-top: 20px;
+  gap: 12px;
+  color: #334155;
+  font-size: 15px;
 }
 
-.conteudo-detalhes p {
-  margin: 0;
-  color: #333;
-  line-height: 1.4;
-}
-
-.botoes-modal {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-
-  margin-top: 25px;
-}
-
-.cancelar,
-.confirmar {
-  padding: 12px 25px;
-
-  border-radius: 8px;
-
-  font-weight: bold;
-
+.btn-fechar {
+  border: none;
+  border-radius: 10px;
+  padding: 10px 14px;
+  background: #e2e8f0;
+  color: #334155;
+  font-weight: 600;
   cursor: pointer;
 }
 
-.cancelar {
-  background: #ddd;
-  color: #333;
+.btn-fechar:hover {
+  background: #cbd5e1;
 }
 
-.confirmar {
-  background: #d62828;
-  color: white;
-}
+@media (max-width: 900px) {
+  .cabecalho-pagina {
+    flex-direction: column;
+  }
 
-.sem-resultados {
-  padding: 30px;
-  color: #777;
-  font-weight: bold;
-  text-align: center;
+  .card-filtros {
+    grid-template-columns: 1fr;
+  }
+
+  .btn-cadastrar {
+    width: 100%;
+  }
+
+  .resumo-lista {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .acoes {
+    flex-direction: column;
+  }
 }
 </style>

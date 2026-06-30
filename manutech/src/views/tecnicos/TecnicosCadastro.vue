@@ -1,202 +1,332 @@
-<script setup>
-import { ref, onMounted } from "vue";
-import { useRoute, useRouter } from "vue-router";
-import { useTecnicosStore } from "@/stores/tecnicoStore";
+<template>
+  <div class="pagina-cadastro">
+    <div class="card-cadastro">
+      <div class="cabecalho">
+        <div>
+          <h1>{{ editando ? "Editar técnico" : "Cadastrar técnico" }}</h1>
+          <p>Preencha os dados do técnico e os setores atendidos.</p>
+        </div>
 
-const route = useRoute();
+        <button class="btn-voltar" @click="voltar">Voltar</button>
+      </div>
+
+      <form @submit.prevent="salvarTecnico" class="formulario">
+        <div class="campo">
+          <label for="nome">Nome</label>
+          <input
+            id="nome"
+            v-model="nome"
+            type="text"
+            placeholder="Ex: João Silva"
+          />
+        </div>
+
+        <div class="campo">
+          <label for="telefone">Telefone</label>
+          <input
+            id="telefone"
+            v-model="telefone"
+            type="text"
+            placeholder="Ex: (48) 99999-9999"
+          />
+        </div>
+
+        <div class="campo">
+          <label>Setores atendidos</label>
+
+          <span v-if="setoresStore.loading" class="mensagem-apoio">
+            Carregando setores...
+          </span>
+
+          <span v-if="setoresStore.error" class="mensagem-erro">
+            {{ setoresStore.error }}
+          </span>
+
+          <div class="lista-setores">
+            <label
+              v-for="setor in setoresStore.setores"
+              :key="setor.idSetor"
+              class="opcao-setor"
+            >
+              <input
+                v-model="idsSetores"
+                type="checkbox"
+                :value="setor.idSetor"
+              />
+              <span>{{ setor.nomeSetor }}</span>
+            </label>
+          </div>
+        </div>
+
+        <p v-if="erroFormulario" class="erro-formulario">
+          {{ erroFormulario }}
+        </p>
+
+        <div class="acoes">
+          <button type="button" class="btn-cancelar" @click="voltar">
+            Cancelar
+          </button>
+
+          <button
+            type="submit"
+            class="btn-salvar"
+            :disabled="tecnicoStore.loading"
+          >
+            {{
+              tecnicoStore.loading
+                ? "Salvando..."
+                : editando
+                  ? "Salvar alterações"
+                  : "Cadastrar"
+            }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, onMounted } from "vue";
+import { useRouter, useRoute } from "vue-router";
+import { useTecnicosStore } from "@/stores/tecnicoStore";
+import { useSetoresStore } from "@/stores/setorStore";
+
 const router = useRouter();
-const store = useTecnicosStore();
+const route = useRoute();
+
+const tecnicoStore = useTecnicosStore();
+const setoresStore = useSetoresStore();
 
 const nome = ref("");
 const telefone = ref("");
 const idsSetores = ref([]);
+const erroFormulario = ref("");
 
-const erro = ref("");
-const isEdit = ref(false);
+const editando = computed(() => !!route.params.id);
 
 onMounted(async () => {
-  await store.buscarTecnicos();
+  await setoresStore.buscarSetores();
+  await tecnicoStore.buscarTecnicos();
 
-  const id = route.params.id;
-
-  if (id) {
-    isEdit.value = true;
-
-    const tecnico = await store.buscarTecnicoPorId(id);
+  if (editando.value) {
+    const tecnico = tecnicoStore.buscarTecnicoPorId(Number(route.params.id));
 
     if (tecnico) {
       nome.value = tecnico.nome;
       telefone.value = tecnico.telefone;
-
       idsSetores.value = tecnico.setoresAtendidos.map((setor) => setor.idSetor);
     }
   }
 });
 
-async function salvar() {
-  erro.value = "";
+async function salvarTecnico() {
+  erroFormulario.value = "";
 
   if (!nome.value.trim()) {
-    erro.value = "O nome do técnico é obrigatório.";
+    erroFormulario.value = "Informe o nome do técnico.";
+    return;
+  }
+
+  if (!telefone.value.trim()) {
+    erroFormulario.value = "Informe o telefone do técnico.";
     return;
   }
 
   if (idsSetores.value.length === 0) {
-    erro.value = "Selecione pelo menos um setor atendido.";
+    erroFormulario.value = "Selecione pelo menos um setor atendido.";
     return;
   }
 
   const tecnico = {
     nome: nome.value.trim(),
     telefone: telefone.value.trim(),
-    idsSetores: idsSetores.value,
+    idsSetores: idsSetores.value.map(Number),
   };
 
-  if (isEdit.value) {
-    await store.atualizarTecnico(route.params.id, tecnico);
-  } else {
-    await store.adicionarTecnico(tecnico);
-  }
+  try {
+    if (editando.value) {
+      await tecnicoStore.atualizarTecnico(Number(route.params.id), tecnico);
+    } else {
+      await tecnicoStore.adicionarTecnico(tecnico);
+    }
 
+    router.push("/tecnicos");
+  } catch (erro) {
+    erroFormulario.value =
+      "Não foi possível salvar o técnico. Verifique os dados e tente novamente.";
+  }
+}
+
+function voltar() {
   router.push("/tecnicos");
 }
 </script>
 
-<template>
-  <div class="container">
-    <h1>
-      {{ isEdit ? "Atualizar Técnico" : "Cadastro de Técnico" }}
-    </h1>
-
-    <form class="formulario">
-      <p v-if="erro" class="mensagem-erro">
-        {{ erro }}
-      </p>
-
-      <input v-model="nome" type="text" placeholder="Nome do técnico" />
-
-      <input v-model="telefone" type="text" placeholder="Telefone" />
-
-      <div class="grupo-setores">
-        <label class="titulo-setores"> Setores atendidos </label>
-
-        <label
-          v-for="setor in store.setoresDisponiveis"
-          :key="setor.idSetor"
-          class="checkbox-setor"
-        >
-          <input v-model="idsSetores" type="checkbox" :value="setor.idSetor" />
-
-          {{ setor.nomeSetor }}
-        </label>
-      </div>
-
-      <button type="button" @click="salvar">
-        {{ isEdit ? "Atualizar" : "Salvar" }}
-      </button>
-
-      <button type="button" class="cancelar" @click="router.push('/tecnicos')">
-        Cancelar
-      </button>
-    </form>
-  </div>
-</template>
-
 <style scoped>
-.container {
+.pagina-cadastro {
+  width: 100%;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding-top: 30px;
+  justify-content: center;
 }
 
-h1 {
-  color: #153b7a;
-  font-size: 2.6rem;
-  margin-bottom: 30px;
+.card-cadastro {
+  width: 100%;
+  max-width: 760px;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+}
+
+.cabecalho {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.cabecalho h1 {
+  font-size: 28px;
+  color: #1e3a8a;
+  margin-bottom: 6px;
+}
+
+.cabecalho p {
+  color: #64748b;
+  font-size: 15px;
 }
 
 .formulario {
   display: flex;
   flex-direction: column;
-  gap: 15px;
-  width: 400px;
+  gap: 18px;
 }
 
-input {
-  padding: 12px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-}
-
-button {
-  background: #173f82;
-  color: white;
-
-  padding: 12px;
-
-  border: none;
-  border-radius: 8px;
-
-  font-weight: bold;
-  cursor: pointer;
-
-  transition: 0.2s;
-}
-
-button:hover {
-  background: #123063;
-}
-
-.cancelar {
-  background: #777;
-}
-
-.cancelar:hover {
-  background: #555;
-}
-
-.grupo-setores {
+.campo {
   display: flex;
   flex-direction: column;
+  gap: 8px;
+}
+
+.campo label {
+  font-weight: 600;
+  color: #334155;
+}
+
+.campo input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 15px;
+  outline: none;
+  background: #ffffff;
+}
+
+.campo input:focus {
+  border-color: #2563eb;
+}
+
+.lista-setores {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 10px;
-
-  padding: 15px;
-
-  border: 1px solid #ccc;
-  border-radius: 8px;
-
-  background: white;
+  margin-top: 6px;
 }
 
-.titulo-setores {
-  color: #153b7a;
-  font-weight: bold;
-  margin-bottom: 5px;
-}
-
-.checkbox-setor {
+.opcao-setor {
   display: flex;
   align-items: center;
-  gap: 8px;
-
-  font-size: 1rem;
+  gap: 10px;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 12px 14px;
   cursor: pointer;
 }
 
-.checkbox-setor input {
-  width: auto;
+.opcao-setor input {
+  width: 18px;
+  height: 18px;
 }
 
-.mensagem-erro {
-  background: #ffd9d9;
-  color: #b42318;
+.opcao-setor span {
+  color: #334155;
+  font-weight: 600;
+}
 
-  padding: 12px;
+.mensagem-apoio {
+  font-size: 13px;
+  color: #64748b;
+}
 
+.mensagem-erro,
+.erro-formulario {
+  font-size: 14px;
+  color: #dc2626;
+}
+
+.erro-formulario {
+  background: #fee2e2;
+  padding: 10px 12px;
   border-radius: 8px;
+}
 
-  font-weight: bold;
-  text-align: center;
+.acoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.btn-voltar,
+.btn-cancelar,
+.btn-salvar {
+  border: none;
+  border-radius: 10px;
+  padding: 11px 18px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-voltar,
+.btn-cancelar {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.btn-salvar {
+  background: #1e3a8a;
+  color: #ffffff;
+}
+
+.btn-salvar:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.btn-voltar:hover,
+.btn-cancelar:hover {
+  background: #cbd5e1;
+}
+
+.btn-salvar:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+@media (max-width: 700px) {
+  .cabecalho {
+    flex-direction: column;
+  }
+
+  .lista-setores {
+    grid-template-columns: 1fr;
+  }
+
+  .acoes {
+    flex-direction: column;
+  }
 }
 </style>
