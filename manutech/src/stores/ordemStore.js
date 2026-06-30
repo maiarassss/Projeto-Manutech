@@ -8,7 +8,7 @@ export const useOrdensStore = defineStore("ordens", () => {
       titulo: "Falha na cortadeira",
       descricao: "Máquina travando durante o processo de corte do couro.",
       prioridade: "ALTA",
-      status: "EM_ANDAMENTO",
+      status: "ANDAMENTO",
 
       idMaquina: 1,
       codigoIdentificador: "CORT-001",
@@ -23,7 +23,7 @@ export const useOrdensStore = defineStore("ordens", () => {
       titulo: "Revisão da máquina de costura",
       descricao: "Revisão preventiva na máquina de costura industrial.",
       prioridade: "MEDIA",
-      status: "EM_ANDAMENTO",
+      status: "ANDAMENTO",
 
       idMaquina: 2,
       codigoIdentificador: "COST-002",

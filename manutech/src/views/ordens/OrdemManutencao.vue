@@ -92,7 +92,7 @@ function limparFiltros() {
 
       <select v-model="statusSelecionado">
         <option value="">Todos os status</option>
-        <option value="EM_ANDAMENTO">Em andamento</option>
+        <option value="ANDAMENTO">Em andamento</option>
         <option value="CONCLUIDA">Concluída</option>
         <option value="CANCELADA">Cancelada</option>
       </select>
@@ -381,11 +381,6 @@ h1 {
 }
 
 .andamento {
-  background: #dbeafe;
-  color: #1d4ed8;
-}
-
-.em_andamento {
   background: #dbeafe;
   color: #1d4ed8;
 }

@@ -128,7 +128,7 @@ async function salvar() {
 
       <select v-model="status">
         <option value="ABERTA">Aberta</option>
-        <option value="EM_ANDAMENTO">Em andamento</option>
+        <option value="ANDAMENTO">Em andamento</option>
         <option value="CONCLUIDA">Concluída</option>
         <option value="CANCELADA">Cancelada</option>
       </select>
