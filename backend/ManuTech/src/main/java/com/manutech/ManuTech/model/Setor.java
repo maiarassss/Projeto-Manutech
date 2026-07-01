@@ -9,8 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Getter
-@Setter
+@Getter @Setter
 @NoArgsConstructor
 @Table(name = "TBSETOR")
 public class Setor {
@@ -19,8 +18,7 @@ public class Setor {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long idSetor;
 
-    //configurações de banco sempre na entidade
-    @Column(unique = true, nullable = false) //*rn para que não haja mais setores com o mesmo nome
+    @Column(unique = true, nullable = false)
     private String nomeSetor;
 
     @OneToMany(mappedBy = "setor")

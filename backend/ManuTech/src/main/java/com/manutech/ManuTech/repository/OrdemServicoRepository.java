@@ -1,6 +1,5 @@
 package com.manutech.ManuTech.repository;
 
-
 import com.manutech.ManuTech.model.OrdemServico;
 import com.manutech.ManuTech.model.Prioridade;
 import com.manutech.ManuTech.model.StatusOrdem;
@@ -16,12 +15,11 @@ public interface OrdemServicoRepository extends JpaRepository<OrdemServico, Long
 
     List<OrdemServico> findByStatus(StatusOrdem status);
 
-    //alterar id para codigo para que o tecnico possa pesquisar as ordens, ele não tem acesso ao id
     List<OrdemServico> findByMaquinaCodigoIdentificadorContainingIgnoreCase(String codigoIdentificador);
 
-    //consulta de ordens pelo nome do setor da máquina
+    //consulta de ordens pelo nome do setor que a máquina pertence
     List<OrdemServico> findByMaquinaSetorNomeSetorContainingIgnoreCase(String nomeSetor);
 
-    //consulta todas as ordens que determinado tecnico atendeu
+    //consulta todas as ordens atendidas por determindado técnico
     List<OrdemServico> findByTecnicoIdTecnico(Long idTecnico);
 }

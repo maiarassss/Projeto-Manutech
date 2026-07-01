@@ -15,6 +15,6 @@ public record UsuarioRequestDTO(
         @NotNull(message = "*Informe o perfil")
         PerfilUsuario perfil,
 
-        //só é obrigatorio colocar se o perfil for tecnico
+        //obrigatório preencher apenas se o usuário for técnico
         Long idTecnico
 ) {}

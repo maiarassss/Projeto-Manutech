@@ -1,6 +1,5 @@
 package com.manutech.ManuTech.dto;
 
-
 import com.manutech.ManuTech.model.Prioridade;
 import com.manutech.ManuTech.model.StatusOrdem;
 import jakarta.validation.constraints.NotBlank;
@@ -24,5 +23,5 @@ public record OrdemServicoRequestDTO(
         Long idMaquina,
 
         Long idTecnico
-        //nao é obrigatorio porque uma ordem não precisa ser vinculada a um técnico assim qu é aberta
+        //não é obrigatorio porque uma ordem não precisa ser vinculada a um técnico assim que é aberta
 ) {}

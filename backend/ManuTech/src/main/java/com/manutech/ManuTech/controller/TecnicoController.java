@@ -23,7 +23,8 @@ public class TecnicoController {
         return service.listarTecnicos();
     }
 
-    @GetMapping("/setor/{idSetor}") //rota exclusiva, apenas {idSetor} poderia ser confundido com a busca de tecnico por id
+    //rota exclusiva, apenas {idSetor} poderia ser confundido com a busca de tecnico por id
+    @GetMapping("/setor/{idSetor}")
     public List<TecnicoResponseDTO> listarPorSetor(@PathVariable Long idSetor){
         return service.listarTecnicosPorSetor(idSetor);
     }
@@ -47,5 +48,4 @@ public class TecnicoController {
     public TecnicoResponseDTO atualizar(@PathVariable Long idTecnico, @RequestBody @Valid TecnicoRequestDTO dto){
         return service.atualizarTecnico(idTecnico, dto);
     }
-
 }

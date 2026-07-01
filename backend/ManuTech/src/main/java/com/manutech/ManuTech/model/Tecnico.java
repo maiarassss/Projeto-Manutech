@@ -1,6 +1,5 @@
 package com.manutech.ManuTech.model;
 
-
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,7 +21,6 @@ public class Tecnico {
 
     private String nome;
     private String telefone;
-
 
     @ManyToMany //sem definir coluna para FK uma tabela intermediária é criada
     @JoinTable(name = "TB_TECNICO_SETOR", //formatação de nomenclatura no banco

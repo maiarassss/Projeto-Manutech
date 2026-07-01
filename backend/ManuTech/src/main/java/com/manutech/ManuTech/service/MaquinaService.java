@@ -22,11 +22,8 @@ public class MaquinaService {
 
     public MaquinaService(MaquinaRepository repository, @Lazy OrdemServicoService ordemService, SetorService setorService){
         this.repository = repository;
-        this.ordemService = ordemService;
-        //apesar da máquina em si ser independente da ordem, o histórico dela não é
-
+        this.ordemService = ordemService; //o histórico de manutenções da máquina é dependente da ordem
         this.setorService = setorService;
-        //setor necessário para registrar e atualizar máquinas
     }
 
     public Maquina buscarEntidade(Long idMaquina){
@@ -45,24 +42,22 @@ public class MaquinaService {
         );
     }
 
-    //metodo para que o estado de atividade da maquina possa ser salvo conforme o status da ordem de servico
+    //metodo para salvar o estado de atividade da máquina conforme o status da ordem de serviço
     public void salvarEntidade(Maquina maquina){
         repository.save(maquina);
     }
-
 
     public MaquinaResponseDTO buscarPorId(Long idMaquina){
         Maquina maquina = buscarEntidade(idMaquina);
         return toResponseDTO(maquina);
     }
 
-    //retorna lista
     public List<MaquinaResponseDTO> buscarPorCodigo(String codigoIdentificador){
 
         List<Maquina> maquinas = repository.findByCodigoIdentificadorContainingIgnoreCase(codigoIdentificador);
-       //guarda a busca com valor aproximado em uma lista
+       //guarda os resultados da busca com valor aproximado em uma lista
 
-        if (maquinas.isEmpty()) { //se não houver registros com o valor informado, retorna mensagem
+        if (maquinas.isEmpty()) { //verifica a existência de registros
             throw new RecursoNaoEncontradoException("Máquina não encontrada!");
         }
 
@@ -76,20 +71,18 @@ public class MaquinaService {
 
         List<Maquina> maquinas = repository.findByModeloContainingIgnoreCase(modelo);
 
-        if (maquinas.isEmpty()) { //se não houver registros com o valor informado, retorna mensagem
+        if (maquinas.isEmpty()) {
             throw new RecursoNaoEncontradoException("Máquina não encontrada!");
         }
         return maquinas
                 .stream()
                 .map(this::toResponseDTO)
                 .toList();
-        //retorna uma lista com os itens já convertidos em dto
     }
 
-    //**manter id setor para testar a selecao no front
     public List<MaquinaResponseDTO> buscarPorModeloESetor(String modelo, Long idSetor){
 
-        //verifica se o setor existe
+        //primeiro verifica se o setor existe
         setorService.buscarEntidade(idSetor);
 
         List<Maquina> maquinas = repository.findByModeloAndSetorIdSetor(modelo, idSetor);
@@ -104,8 +97,6 @@ public class MaquinaService {
                 .toList();
     }
 
-
-    //lista todas as máquinas cadastradas no sistema
     public List<MaquinaResponseDTO> listarMaquinas(){
         return repository.findAll()
                 .stream()
@@ -120,10 +111,8 @@ public class MaquinaService {
                 .toList();
     }
 
-    //lista as máquinas atráves do setor indicado
     public List<MaquinaResponseDTO> buscarMaquinasPorSetor(Long idSetor){
 
-        //verifica se existe
         setorService.buscarEntidade(idSetor);
 
         return repository.findBySetorIdSetor(idSetor)
@@ -134,15 +123,12 @@ public class MaquinaService {
 
     public List<OrdemServicoResponseDTO> listarOrdens(String codigoIdentificador){
         return ordemService.listarOrdensPorMaquina(codigoIdentificador);
-        //não precisa do .map porque dentro do método já tem
     }
-
 
     public MaquinaResponseDTO salvarMaquina(MaquinaRequestDTO dto){
 
         Maquina maquina = new Maquina();
 
-        //**rn cod identificador unico
         //verifica se o código identificador inserido no request já existe no banco de dados
         if (repository.existsByCodigoIdentificadorIgnoreCase(dto.codigoIdentificador())) {
             throw new RegraDeNegocioException("Código identificador já registrado.");
@@ -160,9 +146,6 @@ public class MaquinaService {
         return toResponseDTO(maquinaSalva); //como vai converter em dto, o que fica salvo no response ainda é apenas o idSetor
     }
 
-//    //quem faz a atualização da máquina? se for o gestor ele tem acesso ao id mas se for o tecnico não
-//    //precisa informar o id para atualizar e o técnico so precisa atualizar a atividade
-    //restringir para o técnico as outras opções de atualização ou fazer isso apenas pela atualização da ordem?
     public MaquinaResponseDTO atualizarMaquina (Long idMaquina, MaquinaRequestDTO dto){
 
         Maquina maquina = buscarEntidade(idMaquina);
@@ -170,7 +153,6 @@ public class MaquinaService {
         maquina.setModelo(dto.modelo());
         maquina.setAtiva(dto.ativa());
 
-        //mesma situacao do salvar
         Setor setor = setorService.buscarEntidade(dto.idSetor());
         maquina.setSetor(setor);
         Maquina maquinaSalva = repository.save(maquina);
@@ -182,7 +164,7 @@ public class MaquinaService {
 
         Maquina maquina = buscarEntidade(idMaquina);
 
-        //se a máquina estiver ativa ou com ordens abertas não pode ser excluida; lança exceção **rn
+        //se a máquina estiver ativa ou com ordens abertas não pode ser excluída
         if(maquina.getAtiva() == true || !maquina.getListaOrdens().isEmpty()){
             throw new RegraDeNegocioException("Não é possível excluir máquinas ativas ou com ordens pendentes.");
         }
