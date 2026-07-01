@@ -6,8 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Getter
-@Setter
+@Getter @Setter
 @NoArgsConstructor
 @Table(name = "TBORDEMSERVICO")
 public class OrdemServico {
@@ -17,10 +16,8 @@ public class OrdemServico {
     private Long idOrdem;
 
     private String titulo;
-
     private String descricao;
 
-    //enuns
     @Enumerated(EnumType.STRING)
     private Prioridade prioridade;
     @Enumerated(EnumType.STRING)

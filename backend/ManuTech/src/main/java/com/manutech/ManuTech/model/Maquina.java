@@ -9,8 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Getter
-@Setter
+@Getter @Setter
 @NoArgsConstructor
 @Table(name = "TBMAQUINA")
 public class Maquina {
@@ -19,13 +18,10 @@ public class Maquina {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long idMaquina;
 
-    //RN24: código obrigatório para cadastrar máquina que seja unico
     @Column(unique = true, nullable = false, length = 100)
     private String codigoIdentificador;
 
     private String modelo;
-
-    //informa o estado atual de atividade da máquina
     private Boolean ativa;
 
     //muitas máquinas podem pertencer a um setor

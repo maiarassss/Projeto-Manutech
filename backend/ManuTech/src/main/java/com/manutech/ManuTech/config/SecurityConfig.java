@@ -1,6 +1,4 @@
-
 package com.manutech.ManuTech.config;
-
 
 import com.manutech.ManuTech.security.UsuarioDetailsService;
 import org.springframework.context.annotation.Bean;
@@ -17,19 +15,15 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.config.http.SessionCreationPolicy;
 
-
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-
     private final UsuarioDetailsService usuarioDetailsService;
-
 
     public SecurityConfig(UsuarioDetailsService usuarioDetailsService) {
         this.usuarioDetailsService = usuarioDetailsService;
     }
-
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -64,14 +58,12 @@ public class SecurityConfig {
                 .build();
     }
 
-
     @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider(usuarioDetailsService);
         provider.setPasswordEncoder(passwordEncoder());
         return provider;
     }
-
 
     @Bean
     public AuthenticationManager authenticationManager(
@@ -80,13 +72,8 @@ public class SecurityConfig {
         return configuration.getAuthenticationManager();
     }
 
-
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 }
-
-
-
-

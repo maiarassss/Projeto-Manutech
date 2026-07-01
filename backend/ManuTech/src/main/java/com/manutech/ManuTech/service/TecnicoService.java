@@ -16,8 +16,6 @@ import java.util.List;
 public class TecnicoService {
 
     private final TecnicoRepository repository;
-
-    //injeção de dependência do Setor para que o técnico possa ser atrelado a um setor (ou mais)
     private final SetorService setorService;
 
     public TecnicoService(TecnicoRepository repository, SetorService setorService) {
@@ -27,7 +25,6 @@ public class TecnicoService {
 
     private TecnicoResponseDTO toResponseDTO(Tecnico tecnico) {
         return new TecnicoResponseDTO(
-                //apenas get para trazer atributos únicos
                 tecnico.getIdTecnico(),
                 tecnico.getNome(),
                 tecnico.getTelefone(),
@@ -51,16 +48,14 @@ public class TecnicoService {
         return toResponseDTO(tecnico);
     }
 
-    //lista técnicos por nome
     public List<TecnicoResponseDTO> buscarPorNome(String nome){
 
-        if(!repository.existsByNomeIgnoreCase(nome)){ //apenas chamar um metodo boleano considera automat ele como true
+        if(!repository.existsByNomeIgnoreCase(nome)){
             throw new RegraDeNegocioException("O técnico informado não está cadastrado.");
         }
 
         return repository.findByNomeContainingIgnoreCase(nome)
                 .stream().map(this::toResponseDTO).toList();
-                // cada item listado é convertido em dto s
     }
 
     //lista tdos os técnicos relacionados ao setor informado
@@ -71,39 +66,29 @@ public class TecnicoService {
                 .stream().map(this::toResponseDTO).toList();
     }
 
-
     public List<TecnicoResponseDTO> listarTecnicos() {
         return repository.findAll().stream().map(this::toResponseDTO).toList();
     }
 
-
-    //metodo que vai percorrer a lista de id setores(do tecnico) e para cada id usa o metodo de buscar entidade para
-    //retornar o setor correspondente e guardar ele(s) em uma outra lista
+    //percorre a lista de idSetor que o técnico atende e para cada id usa o metodo de buscar entidade (do SetorService)
     public List<Setor> buscarSetores(List<Long> idsSetores) {
         return new ArrayList<>( //arraylist para que não retorne uma lista imutável
                 idsSetores.stream()
                         .map(setorService::buscarEntidade)
                         .toList()
+                //cada setor retornado é armazenado em outra lista
         );
     }
 
-
     public TecnicoResponseDTO salvarTecnico(TecnicoRequestDTO dto) {
-        //passa os dados do request para um objeto vazio Tecnico e o transforma em dto
+
         Tecnico tecnico = new Tecnico();
 
         tecnico.setNome(dto.nome());
         tecnico.setTelefone(dto.telefone());
 
-        //conflito porque os tipos das listas são diferentes
-        // tecnico.setSetoresAtendidos(dto.idsSetores());
-
-        //busca os ids em dto através dometodo de buscarEntidade e guarda cada objeto puxado dentro de uma lista
-        // do tipo Setor(que possa ser usada como parâmetro para a modificação da lista de setores original da entidade)
-
-
-        //usa o metodo que puxa o id de cada setor (ainda que um id de dto) para modificar a lista de setoresAtendidos
-        //para a lista de ids 'puxados' do dto
+        //busca os idsSetores em dto e guarda o que é retornado dentro de uma lista
+        //do tipo Setor(que possa ser usada como parâmetro para a modificação da lista de setores original da entidade)
         tecnico.setSetoresAtendidos(buscarSetores(dto.idsSetores()));
 
         Tecnico tecnicoSalvo = repository.save(tecnico);

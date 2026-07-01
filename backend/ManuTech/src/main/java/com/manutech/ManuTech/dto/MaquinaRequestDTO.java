@@ -1,6 +1,5 @@
 package com.manutech.ManuTech.dto;
 
-
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 

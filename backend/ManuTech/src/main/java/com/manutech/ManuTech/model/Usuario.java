@@ -31,11 +31,11 @@ public class Usuario implements UserDetails {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private PerfilUsuario perfil; //gestor ou tecnico
+    private PerfilUsuario perfil;
 
     //atribui um tecnico ao usuario apenas se o perfil for tecnico
     @OneToOne
-    @JoinColumn(name = "id_tecnico", unique = true) //um idTecnico so pode ser vinculado a um login
+    @JoinColumn(name = "id_tecnico", unique = true) //um idTecnico só pode ser vinculado a um login
     private Tecnico tecnico;
 
     @Override

@@ -101,7 +101,7 @@ public class OrdemServicoService {
                 .toList();
     }
 
-    //listagem de ordens de determinada máquina através de seu codigo identificador
+    //listagem de ordens de determinada máquina através de seu codigo identificador, porque o técnico não tem acesso ao id
     public List<OrdemServicoResponseDTO> listarOrdensPorMaquina(String codigoIdentificador){
 
         List<OrdemServico> ordens = repository.findByMaquinaCodigoIdentificadorContainingIgnoreCase(codigoIdentificador);
