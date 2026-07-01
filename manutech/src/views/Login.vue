@@ -1,19 +1,74 @@
+<template>
+  <div class="pagina-login">
+    <div class="card-login">
+      <div class="area-logo">
+        <div class="logo">M</div>
+        <h1>MANUTECH</h1>
+        <p>Sistema de manutenção industrial</p>
+      </div>
+
+      <form class="formulario-login" @submit.prevent="entrar">
+        <div class="campo">
+          <label for="login">Usuário</label>
+          <input
+            id="login"
+            v-model="login"
+            type="text"
+            placeholder="Digite seu usuário"
+          />
+        </div>
+
+        <div class="campo">
+          <label for="senha">Senha</label>
+          <input
+            id="senha"
+            v-model="senha"
+            type="password"
+            placeholder="Digite sua senha"
+          />
+        </div>
+
+        <p v-if="erro" class="mensagem-erro">
+          {{ erro }}
+        </p>
+
+        <p v-if="mensagemSucesso" class="mensagem-sucesso">
+          {{ mensagemSucesso }}
+        </p>
+
+        <button type="submit" class="btn-entrar" :disabled="carregando">
+          {{ carregando ? "Entrando..." : "Entrar" }}
+        </button>
+      </form>
+
+      <div class="rodape-login">
+        <span>Login integrado ao backend com Spring Security</span>
+      </div>
+    </div>
+  </div>
+</template>
+
 <script setup>
 import { ref } from "vue";
 import { useRouter } from "vue-router";
-import { Lock, UserCircle } from "lucide-vue-next";
+import { api } from "@/services/api";
+import { useAuthStore } from "@/stores/authStore";
 
 const router = useRouter();
+const authStore = useAuthStore();
 
-const nome = ref("");
+const login = ref("");
 const senha = ref("");
 const erro = ref("");
+const mensagemSucesso = ref("");
+const carregando = ref(false);
 
-function entrar() {
+async function entrar() {
   erro.value = "";
+  mensagemSucesso.value = "";
 
-  if (!nome.value.trim()) {
-    erro.value = "Informe o nome de usuário.";
+  if (!login.value.trim()) {
+    erro.value = "Informe o usuário.";
     return;
   }
 
@@ -22,195 +77,160 @@ function entrar() {
     return;
   }
 
-  router.push("/");
+  carregando.value = true;
+
+  try {
+    const resposta = await api.post("/login", {
+      login: login.value.trim(),
+      senha: senha.value,
+    });
+
+    const usuario = resposta.data;
+
+    authStore.salvarUsuario(usuario);
+
+    mensagemSucesso.value = usuario.mensagem || "Login realizado com sucesso.";
+
+    setTimeout(() => {
+      router.push("/");
+    }, 600);
+  } catch (error) {
+    console.error(error);
+
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      erro.value = "Usuário ou senha inválidos.";
+      return;
+    }
+
+    erro.value = "Não foi possível realizar o login. Tente novamente.";
+  } finally {
+    carregando.value = false;
+  }
 }
 </script>
 
-<template>
-  <main class="login-page">
-    <section class="login-card">
-      <div class="login-header">
-        <div class="icone-login">
-          <UserCircle :size="54" />
-        </div>
-
-        <h1>Manutech</h1>
-
-        <p>Acesse o sistema de gerenciamento de manutenção.</p>
-      </div>
-
-      <form class="form-login">
-        <p v-if="erro" class="mensagem-erro">
-          {{ erro }}
-        </p>
-
-        <label>
-          Nome de usuário
-          <input
-            v-model="nome"
-            type="text"
-            placeholder="Digite seu nome de usuário"
-          />
-        </label>
-
-        <label>
-          Senha
-          <input
-            v-model="senha"
-            type="password"
-            placeholder="Digite sua senha"
-          />
-        </label>
-
-        <button type="button" @click="entrar">
-          <Lock :size="20" />
-          Entrar
-        </button>
-      </form>
-
-      <p class="aviso">
-        Login visual antecipado para futura integração com Spring Security.
-      </p>
-    </section>
-  </main>
-</template>
-
 <style scoped>
-.login-page {
-  width: 100vw;
+.pagina-login {
   min-height: 100vh;
-
-  background: linear-gradient(135deg, #144e94, #1e293b);
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  padding: 30px;
-}
-
-.login-card {
   width: 100%;
-  max-width: 430px;
-
-  background: white;
-
-  padding: 38px;
-
-  border-radius: 18px;
-
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+  background: linear-gradient(135deg, #1e3a8a, #0f172a);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
 }
 
-.login-header {
+.card-login {
+  width: 100%;
+  max-width: 420px;
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 32px;
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.25);
+}
+
+.area-logo {
   text-align: center;
   margin-bottom: 28px;
 }
 
-.icone-login {
-  width: 82px;
-  height: 82px;
-
-  margin: 0 auto 16px;
-
-  background: #e8f0fe;
-  color: #144e94;
-
+.logo {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  background: #1e3a8a;
+  color: #ffffff;
+  font-size: 32px;
+  font-weight: 800;
   display: flex;
-  align-items: center;
   justify-content: center;
-
-  border-radius: 50%;
+  align-items: center;
+  margin: 0 auto 14px;
 }
 
-.login-header h1 {
-  margin: 0;
-
-  color: #144e94;
-  font-size: 2.4rem;
+.area-logo h1 {
+  color: #1e3a8a;
+  font-size: 30px;
+  margin-bottom: 6px;
+  letter-spacing: 1px;
 }
 
-.login-header p {
-  margin-top: 8px;
-
+.area-logo p {
   color: #64748b;
-  font-size: 1rem;
+  font-size: 15px;
 }
 
-.form-login {
+.formulario-login {
   display: flex;
   flex-direction: column;
   gap: 18px;
 }
 
-label {
+.campo {
   display: flex;
   flex-direction: column;
-  gap: 7px;
-
-  color: #1e293b;
-  font-weight: bold;
+  gap: 8px;
 }
 
-input {
-  height: 48px;
+.campo label {
+  font-weight: 600;
+  color: #334155;
+}
 
-  padding: 0 14px;
-
+.campo input {
+  width: 100%;
+  padding: 12px 14px;
   border: 1px solid #cbd5e1;
   border-radius: 10px;
-
-  font-size: 1rem;
+  font-size: 15px;
   outline: none;
+  background: #ffffff;
 }
 
-input:focus {
-  border-color: #144e94;
-}
-
-button {
-  height: 50px;
-
-  background: #144e94;
-  color: white;
-
-  border: none;
-  border-radius: 10px;
-
-  font-weight: bold;
-  font-size: 1rem;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-
-  cursor: pointer;
-
-  transition: 0.2s;
-}
-
-button:hover {
-  background: #0f3f78;
+.campo input:focus {
+  border-color: #2563eb;
 }
 
 .mensagem-erro {
-  background: #ffd9d9;
-  color: #b42318;
-
-  padding: 12px;
-
+  background: #fee2e2;
+  color: #b91c1c;
+  padding: 10px 12px;
   border-radius: 8px;
-
-  font-weight: bold;
-  text-align: center;
+  font-size: 14px;
 }
 
-.aviso {
-  margin-top: 22px;
+.mensagem-sucesso {
+  background: #dcfce7;
+  color: #166534;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+}
 
-  color: #64748b;
-  font-size: 0.85rem;
+.btn-entrar {
+  border: none;
+  border-radius: 10px;
+  padding: 12px 18px;
+  background: #1e3a8a;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.btn-entrar:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.btn-entrar:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.rodape-login {
+  margin-top: 22px;
   text-align: center;
+  color: #64748b;
+  font-size: 13px;
 }
 </style>

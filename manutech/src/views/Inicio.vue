@@ -8,15 +8,18 @@ import {
   AlertTriangle,
   CheckCircle,
   PlusCircle,
+  ClipboardList,
 } from "lucide-vue-next";
 
 import { useMaquinasStore } from "@/stores/maquinaStore";
 import { useTecnicosStore } from "@/stores/tecnicoStore";
 import { useOrdensStore } from "@/stores/ordemStore";
+import { useAuthStore } from "@/stores/authStore";
 
 const maquinaStore = useMaquinasStore();
 const tecnicoStore = useTecnicosStore();
 const ordemStore = useOrdensStore();
+const authStore = useAuthStore();
 
 onMounted(() => {
   maquinaStore.buscarMaquinas();
@@ -53,17 +56,21 @@ const ordensCanceladas = computed(
   <section class="inicio">
     <div class="hero">
       <div>
-        <p class="subtitulo">Sistema de gerenciamento industrial</p>
+        <p class="subtitulo">Gestão de manutenção industrial</p>
 
         <h1>Bem-vindo ao Manutech</h1>
 
         <p class="descricao">
-          Controle máquinas, técnicos e ordens de manutenção de forma simples,
-          organizada e eficiente.
+          Acompanhe ordens de serviço, consulte máquinas cadastradas e organize
+          os responsáveis pelos atendimentos de manutenção.
         </p>
 
         <div class="acoes-hero">
-          <RouterLink to="/ordens/cadastro" class="botao-principal">
+          <RouterLink
+            v-if="authStore.ehGestor"
+            to="/ordens/cadastro"
+            class="botao-principal"
+          >
             <PlusCircle :size="20" />
             Cadastrar ordem
           </RouterLink>
@@ -105,7 +112,7 @@ const ordensCanceladas = computed(
         <div>
           <h2>{{ totalTecnicos }}</h2>
           <p>Técnicos cadastrados</p>
-          <small>Equipe disponível para manutenção</small>
+          <small>Equipe responsável pelos atendimentos</small>
         </div>
       </div>
 
@@ -139,12 +146,12 @@ const ordensCanceladas = computed(
         <h2>Acessos rápidos</h2>
 
         <div class="atalhos">
-          <RouterLink to="/maquinas" class="atalho">
+          <RouterLink v-if="authStore.ehGestor" to="/maquinas" class="atalho">
             <Cpu :size="22" />
             Gerenciar máquinas
           </RouterLink>
 
-          <RouterLink to="/tecnicos" class="atalho">
+          <RouterLink v-if="authStore.ehGestor" to="/tecnicos" class="atalho">
             <Users :size="22" />
             Gerenciar técnicos
           </RouterLink>
@@ -157,21 +164,30 @@ const ordensCanceladas = computed(
       </div>
 
       <div class="painel status-sistema">
-        <h2>Status do sistema</h2>
+        <h2>Fluxo de manutenção</h2>
 
         <div class="linha-status">
           <CheckCircle :size="22" />
-          <span>Frontend funcionando com dados mockados</span>
+          <span
+            >Registre solicitações de manutenção para as máquinas
+            cadastradas.</span
+          >
+        </div>
+
+        <div class="linha-status">
+          <ClipboardList :size="22" />
+          <span
+            >Acompanhe o andamento das ordens abertas, em execução ou
+            concluídas.</span
+          >
         </div>
 
         <div class="linha-status">
           <CheckCircle :size="22" />
-          <span>CRUD de máquinas, técnicos e ordens implementado</span>
-        </div>
-
-        <div class="linha-status">
-          <CheckCircle :size="22" />
-          <span>Estrutura preparada para futura integração com API</span>
+          <span
+            >Mantenha o histórico de atendimentos organizado por máquina e
+            responsável.</span
+          >
         </div>
       </div>
     </div>

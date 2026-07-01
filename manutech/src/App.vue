@@ -1,9 +1,20 @@
 <script setup>
 import { ref, computed } from "vue";
-import { RouterLink, RouterView, useRoute } from "vue-router";
-import { Menu, Home, Users, Wrench, Cpu, UserCircle } from "lucide-vue-next";
+import { RouterLink, RouterView, useRoute, useRouter } from "vue-router";
+import {
+  Menu,
+  Home,
+  Users,
+  Wrench,
+  Cpu,
+  UserCircle,
+  LogOut,
+} from "lucide-vue-next";
+import { useAuthStore } from "@/stores/authStore";
 
 const route = useRoute();
+const router = useRouter();
+const authStore = useAuthStore();
 
 const sidebarOpen = ref(false);
 
@@ -20,6 +31,11 @@ function alternarSidebar() {
 function fecharSidebar() {
   sidebarOpen.value = false;
 }
+
+function sair() {
+  authStore.sair();
+  router.push("/login");
+}
 </script>
 
 <template>
@@ -31,9 +47,24 @@ function fecharSidebar() {
 
       <h1>MANUTECH</h1>
 
-      <RouterLink to="/login" class="login-atalho">
-        <UserCircle :size="34" />
-      </RouterLink>
+      <div class="area-usuario">
+        <span v-if="authStore.estaLogado" class="usuario-info">
+          {{ authStore.usuarioLogado.login }} · {{ authStore.perfil }}
+        </span>
+
+        <button
+          v-if="authStore.estaLogado"
+          class="btn-sair"
+          title="Sair"
+          @click="sair"
+        >
+          <LogOut :size="26" />
+        </button>
+
+        <RouterLink v-else to="/login" class="login-atalho">
+          <UserCircle :size="34" />
+        </RouterLink>
+      </div>
     </header>
 
     <aside
@@ -52,6 +83,7 @@ function fecharSidebar() {
       </RouterLink>
 
       <RouterLink
+        v-if="authStore.ehGestor"
         to="/tecnicos"
         class="item-menu"
         active-class="ativo"
@@ -72,6 +104,7 @@ function fecharSidebar() {
       </RouterLink>
 
       <RouterLink
+        v-if="authStore.ehGestor"
         to="/maquinas"
         class="item-menu"
         active-class="ativo"
@@ -148,7 +181,20 @@ body {
   cursor: pointer;
 }
 
-.login-atalho {
+.area-usuario {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.usuario-info {
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.login-atalho,
+.btn-sair {
   color: white;
 
   display: flex;
@@ -158,8 +204,15 @@ body {
   transition: 0.2s;
 }
 
-.login-atalho:hover {
+.login-atalho:hover,
+.btn-sair:hover {
   opacity: 0.8;
+}
+
+.btn-sair {
+  border: none;
+  background: none;
+  cursor: pointer;
 }
 
 /* SIDEBAR */
